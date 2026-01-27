@@ -1,16 +1,20 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { useOrganism } from '@/hooks/useOrganism';
 import { OrganismItem } from './OrganismItem';
 import { TodayView } from './TodayView';
 import { TodayWindow } from './TodayWindow';
+import { ThemeToggle } from './ThemeToggle';
+import { KeyLinksPanel } from './KeyLinksPanel';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, Eye, Calendar, Plus, ArrowLeft, Briefcase, User, Heart, Maximize, Minimize } from 'lucide-react';
+import { RotateCcw, Eye, Calendar, Plus, ArrowLeft, Briefcase, User, Maximize, Minimize, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const OrganismFlow: React.FC = () => {
   const navigate = useNavigate();
   const [isFullscreen, setIsFullscreen] = React.useState(false);
+  const [showKeyLinks, setShowKeyLinks] = React.useState(false);
+  const keyLinksPanelRef = useRef<HTMLDivElement>(null);
   const {
     state,
     todayItems,
@@ -40,6 +44,42 @@ export const OrganismFlow: React.FC = () => {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
+
+  // Handle hover near right edge to show Key Links panel (Generator workspace only)
+  useEffect(() => {
+    if (state.workspace !== 'generator') {
+      setShowKeyLinks(false);
+      return;
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const windowWidth = window.innerWidth;
+      const edgeThreshold = 20; // pixels from right edge to trigger
+
+      // Show panel when cursor is within edgeThreshold of right edge
+      if (e.clientX >= windowWidth - edgeThreshold) {
+        setShowKeyLinks(true);
+      }
+    };
+
+    const handleMouseLeave = (e: MouseEvent) => {
+      // Hide panel when mouse leaves the panel area (but not when moving within it)
+      const panel = keyLinksPanelRef.current;
+      if (panel && !panel.contains(e.relatedTarget as Node)) {
+        // Check if mouse is still near right edge
+        const windowWidth = window.innerWidth;
+        if (e.clientX < windowWidth - 400) { // 400px is panel width
+          setShowKeyLinks(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [state.workspace]);
 
   const toggleFullscreen = async () => {
     if (!document.fullscreenElement) {
@@ -395,187 +435,209 @@ export const OrganismFlow: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-background">
       {/* Header Controls */}
-      <div className="flex justify-between items-center p-6 border-b border-white/20 backdrop-blur-sm">
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+      <div className="flex justify-between items-center px-6 py-4 bg-card border-b border-border">
+        <div className="flex items-center gap-6">
+          <h1 className="text-ios-large-title text-foreground">
             Organizm
           </h1>
-          
-          {/* Workspace Toggle Buttons */}
-          <div className="flex gap-2">
-            <Button
-              variant={state.workspace === 'work' ? 'default' : 'outline'}
-              size="sm"
+
+          {/* Workspace Toggle - iOS Segmented Control Style */}
+          <div className="inline-flex rounded-xl bg-secondary p-1">
+            <button
               onClick={() => switchWorkspace('work')}
-              className="text-white bg-green-900 hover:bg-green-800 transition-all border-none"
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-ios ${
+                state.workspace === 'work'
+                  ? 'bg-card text-foreground shadow-ios'
+                  : 'bg-transparent text-muted-foreground hover:text-foreground'
+              }`}
             >
-              <Briefcase size={16} className="mr-1" />
+              <Briefcase size={14} className="inline mr-1.5" />
               Work
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+            </button>
+            <button
               onClick={() => switchWorkspace('personal')}
-              className="text-white bg-blue-800 hover:bg-blue-700 transition-all border-none"
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-ios ${
+                state.workspace === 'personal'
+                  ? 'bg-card text-foreground shadow-ios'
+                  : 'bg-transparent text-muted-foreground hover:text-foreground'
+              }`}
             >
-              <User size={16} className="mr-1" />
+              <User size={14} className="inline mr-1.5" />
               Personal
-            </Button>
+            </button>
+            <button
+              onClick={() => switchWorkspace('generator')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-ios ${
+                state.workspace === 'generator'
+                  ? 'bg-card text-foreground shadow-ios'
+                  : 'bg-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Users size={14} className="inline mr-1.5" />
+              Generator
+            </button>
           </div>
           
           {state.viewMode === 'tree' && (
-            <Button
-              variant="outline"
-              size="sm"
+            <button
               onClick={addGoal}
-              className="text-white bg-gray-700 hover:bg-gray-600 transition-all border-none"
+              className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-sm font-medium transition-all duration-200 ease-ios active:scale-95 shadow-ios hover:shadow-ios-lg flex items-center gap-2"
             >
-              <Plus size={16} className="mr-1" />
+              <Plus size={16} />
               Add Goal
-            </Button>
+            </button>
           )}
         </div>
-        
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/elizabeth')}
-            className="text-gray-400 bg-gray-700 hover:bg-gray-600 transition-all border-none"
-          >
-            <Heart size={16} className="mr-1 text-gray-400" />
-            Elizabeth
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
+
+        <div className="flex gap-2">
+          <ThemeToggle />
+
+          <button
             onClick={undo}
             disabled={getCurrentHistory().length === 0}
-            className="text-white bg-gray-700 hover:bg-gray-600 transition-all border-none disabled:opacity-50"
+            className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-foreground rounded-xl text-sm transition-all duration-200 ease-ios active:scale-95 disabled:opacity-40 flex items-center gap-2"
           >
-            <RotateCcw size={16} className="mr-1" />
+            <RotateCcw size={16} />
             Undo
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
+          </button>
+
+          <button
             onClick={showAll}
-            className="text-white bg-gray-700 hover:bg-gray-600 transition-all border-none"
+            className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-foreground rounded-xl text-sm transition-all duration-200 ease-ios active:scale-95 flex items-center gap-2"
           >
-            <Eye size={16} className="mr-1" />
+            <Eye size={16} />
             Show All
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
+          </button>
+
+          <button
             onClick={state.viewMode === 'tree' ? switchToTodayView : returnToTreeView}
-            className="text-white bg-gray-700 hover:bg-gray-600 transition-all border-none"
+            className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-foreground rounded-xl text-sm transition-all duration-200 ease-ios active:scale-95 flex items-center gap-2"
           >
             {state.viewMode === 'tree' ? (
               <>
-                <Calendar size={16} className="mr-1" />
+                <Calendar size={16} />
                 Today
               </>
             ) : (
               <>
-                <ArrowLeft size={16} className="mr-1" />
+                <ArrowLeft size={16} />
                 Return
               </>
             )}
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
+          </button>
+
+          <button
             onClick={toggleFullscreen}
-            className="text-white bg-gray-700 hover:bg-gray-600 transition-all border-none"
+            className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-foreground rounded-xl text-sm transition-all duration-200 ease-ios active:scale-95 flex items-center gap-2"
           >
             {isFullscreen ? (
               <>
-                <Minimize size={16} className="mr-1" />
-                Exit Fullscreen
+                <Minimize size={16} />
+                Exit
               </>
             ) : (
               <>
-                <Maximize size={16} className="mr-1" />
+                <Maximize size={16} />
                 Fullscreen
               </>
             )}
-          </Button>
+          </button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="h-[calc(100vh-88px)] overflow-auto">
-        {state.viewMode === 'tree' ? (
-          <div className="p-8">
-            {state.items.length > 0 ? (
-              <DragDropContext onDragEnd={handleDragEnd}>
-                <Droppable droppableId="goals-list">
-                  {(provided) => (
-                    <div
-                      {...provided.droppableProps}
-                      ref={provided.innerRef}
-                      className="flex flex-col gap-10"
-                    >
-                      {state.items.map((item, index) => (
-                        <Draggable key={item.id} draggableId={item.id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className={`flex justify-start transition-all duration-200 ${
-                                snapshot.isDragging 
-                                  ? 'scale-105 shadow-2xl bg-white/20 backdrop-blur-sm rounded-lg p-4' 
-                                  : ''
-                              }`}
-                              style={{
-                                ...provided.draggableProps.style,
-                                cursor: snapshot.isDragging ? 'grabbing' : 'grab'
-                              }}
-                            >
-                              <OrganismItem
-                                item={item}
-                                level={0}
-                                workspace={state.workspace}
-                                onToggleCollapse={toggleCollapse}
-                                onAddItem={addItem}
-                                onDeleteItem={deleteItem}
-                                onUpdateText={updateItemText}
-                                onKeyDown={handleKeyDown}
-                                onReorderChildren={reorderChildren}
-                              />
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
+      <div className="h-[calc(100vh-88px)] overflow-hidden relative">
+        {/* Main content panel */}
+        <div className="h-full overflow-auto">
+            {state.viewMode === 'tree' ? (
+              <div className="pl-[14px] pr-8 py-8 max-w-7xl">
+                {state.items.length > 0 ? (
+                  <DragDropContext onDragEnd={handleDragEnd}>
+                    <Droppable droppableId="goals-list">
+                      {(provided) => (
+                        <div
+                          {...provided.droppableProps}
+                          ref={provided.innerRef}
+                          className="flex flex-col gap-8"
+                        >
+                          {state.items.map((item, index) => (
+                            <Draggable key={item.id} draggableId={item.id} index={index}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  className={`flex justify-start transition-all duration-200 ease-ios ${
+                                    snapshot.isDragging
+                                      ? 'scale-98 opacity-90 shadow-ios-lg'
+                                      : ''
+                                  }`}
+                                  style={{
+                                    ...provided.draggableProps.style,
+                                    cursor: snapshot.isDragging ? 'grabbing' : 'grab'
+                                  }}
+                                >
+                                  <OrganismItem
+                                    item={item}
+                                    level={0}
+                                    workspace={state.workspace}
+                                    onToggleCollapse={toggleCollapse}
+                                    onAddItem={addItem}
+                                    onDeleteItem={deleteItem}
+                                    onUpdateText={updateItemText}
+                                    onKeyDown={handleKeyDown}
+                                    onReorderChildren={reorderChildren}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center text-gray-500">
+                      <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-12 shadow-lg border border-gray-100">
+                        <p className="text-2xl mb-4 font-semibold text-gray-600">No goals yet</p>
+                        <p className="text-gray-400 text-lg">Click "Add Goal" to get started with your {state.workspace} goals</p>
+                      </div>
                     </div>
-                  )}
-                </Droppable>
-              </DragDropContext>
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center text-gray-500">
-                  <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-12 shadow-lg border border-gray-100">
-                    <p className="text-2xl mb-4 font-semibold text-gray-600">No goals yet</p>
-                    <p className="text-gray-400 text-lg">Click "Add Goal" to get started with your {state.workspace} goals</p>
                   </div>
-                </div>
+                )}
               </div>
+            ) : (
+              <TodayView
+                items={todayItems}
+                onReorder={reorderTodayItems}
+                onCopyToNewWindow={handleCopyToNewWindow}
+              />
             )}
           </div>
-        ) : (
-          <TodayView
-            items={todayItems}
-            onReorder={reorderTodayItems}
-            onCopyToNewWindow={handleCopyToNewWindow}
+
+        {/* Key Links slide-in panel (Generator workspace only) */}
+        {state.workspace === 'generator' && (
+          <div
+            ref={keyLinksPanelRef}
+            className={`absolute top-0 right-0 h-full w-[400px] bg-card shadow-2xl border-l border-border transition-transform duration-300 ease-ios z-20 ${
+              showKeyLinks ? 'translate-x-0' : 'translate-x-full'
+            }`}
+            onMouseLeave={() => setShowKeyLinks(false)}
+          >
+            <KeyLinksPanel isVisible={true} />
+          </div>
+        )}
+
+        {/* Hover trigger zone for Key Links (Generator workspace only) */}
+        {state.workspace === 'generator' && !showKeyLinks && (
+          <div
+            className="absolute top-0 right-0 w-3 h-full bg-gradient-to-l from-gray-300/30 to-transparent hover:from-blue-400/40 transition-all cursor-e-resize z-10"
+            onMouseEnter={() => setShowKeyLinks(true)}
+            title="Hover to show Key Links"
           />
         )}
       </div>

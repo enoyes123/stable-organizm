@@ -1,20 +1,23 @@
-import { useState, useCallback, useEffect } from 'react';
-import { TaskItem, OrganismState, TodayItem } from '@/types/organism';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { TaskItem, OrganismState, TodayItem, WorkspaceType } from '@/types/organism';
 import { useOrganismDatabase } from './useOrganismDatabase';
 import { useAuth } from './useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useOrganism = () => {
   const { user } = useAuth();
-  const { loadItemsFromDatabase, saveItemsToDatabase, loadPersonalItemsFromDatabase, savePersonalItemsToDatabase } = useOrganismDatabase();
+  const { loadItemsFromDatabase, saveItemsToDatabase, loadPersonalItemsFromDatabase, savePersonalItemsToDatabase, loadGeneratorItemsFromDatabase, saveGeneratorItemsToDatabase } = useOrganismDatabase();
   
   const [state, setState] = useState<OrganismState>({
     items: [],
     personalItems: [],
+    generatorItems: [],
     selectedId: null,
     viewMode: 'tree',
     workspace: 'work',
     history: [],
-    personalHistory: []
+    personalHistory: [],
+    generatorHistory: []
   });
 
   const [todayItems, setTodayItems] = useState<TodayItem[]>([]);
@@ -26,9 +29,10 @@ export const useOrganism = () => {
     if (!user?.id) return;
     
     const loadData = async () => {
-      const [workItems, personalItems] = await Promise.all([
+      const [workItems, personalItems, generatorItems] = await Promise.all([
         loadItemsFromDatabase(user.id),
-        loadPersonalItemsFromDatabase(user.id)
+        loadPersonalItemsFromDatabase(user.id),
+        loadGeneratorItemsFromDatabase(user.id)
       ]);
       
       if (workItems.length === 0) {
@@ -68,7 +72,7 @@ export const useOrganism = () => {
         setState(prev => ({ ...prev, items: defaultItems }));
         await saveItemsToDatabase(defaultItems, user.id);
       } else {
-        setState(prev => ({ ...prev, items: workItems, personalItems }));
+        setState(prev => ({ ...prev, items: workItems, personalItems, generatorItems }));
       }
       setIsLoading(false);
     };
@@ -76,45 +80,83 @@ export const useOrganism = () => {
     loadData();
   }, [user?.id]);
 
-  // Save to database whenever items change
-  const saveToDatabase = useCallback(async (items: TaskItem[], workspace: 'work' | 'personal') => {
+  // Subscribe to realtime changes for Generator workspace (shared)
+  useEffect(() => {
     if (!user?.id) return;
-    
+
+    const channel = supabase
+      .channel('generator_items_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'organism_items',
+          filter: 'workspace=eq.generator'
+        },
+        async () => {
+          // Reload generator items when any change happens
+          const generatorItems = await loadGeneratorItemsFromDatabase(user.id);
+          setState(prev => ({ ...prev, generatorItems }));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, loadGeneratorItemsFromDatabase]);
+
+  // Save to database whenever items change
+  const saveToDatabase = useCallback(async (items: TaskItem[], workspace: WorkspaceType) => {
+    if (!user?.id) return;
+
     if (workspace === 'work') {
       await saveItemsToDatabase(items, user.id);
-    } else {
+    } else if (workspace === 'personal') {
       await savePersonalItemsToDatabase(items, user.id);
+    } else {
+      await saveGeneratorItemsToDatabase(items, user.id);
     }
-  }, [saveItemsToDatabase, savePersonalItemsToDatabase, user?.id]);
+  }, [saveItemsToDatabase, savePersonalItemsToDatabase, saveGeneratorItemsToDatabase, user?.id]);
 
   const getCurrentItems = useCallback(() => {
-    return state.workspace === 'work' ? state.items : state.personalItems;
-  }, [state.workspace, state.items, state.personalItems]);
+    if (state.workspace === 'work') return state.items;
+    if (state.workspace === 'personal') return state.personalItems;
+    return state.generatorItems;
+  }, [state.workspace, state.items, state.personalItems, state.generatorItems]);
 
   const getCurrentHistory = useCallback(() => {
-    return state.workspace === 'work' ? state.history : state.personalHistory;
-  }, [state.workspace, state.history, state.personalHistory]);
+    if (state.workspace === 'work') return state.history;
+    if (state.workspace === 'personal') return state.personalHistory;
+    return state.generatorHistory;
+  }, [state.workspace, state.history, state.personalHistory, state.generatorHistory]);
 
   const saveToHistory = useCallback(() => {
     setState(prev => {
-      const currentItems = prev.workspace === 'work' ? prev.items : prev.personalItems;
-      const currentHistory = prev.workspace === 'work' ? prev.history : prev.personalHistory;
-      
+      const currentItems = prev.workspace === 'work' ? prev.items : prev.workspace === 'personal' ? prev.personalItems : prev.generatorItems;
+      const currentHistory = prev.workspace === 'work' ? prev.history : prev.workspace === 'personal' ? prev.personalHistory : prev.generatorHistory;
+
       if (prev.workspace === 'work') {
         return {
           ...prev,
           history: [...currentHistory.slice(-9), currentItems]
         };
-      } else {
+      } else if (prev.workspace === 'personal') {
         return {
           ...prev,
           personalHistory: [...currentHistory.slice(-9), currentItems]
+        };
+      } else {
+        return {
+          ...prev,
+          generatorHistory: [...currentHistory.slice(-9), currentItems]
         };
       }
     });
   }, []);
 
-  const switchWorkspace = useCallback((workspace: 'work' | 'personal') => {
+  const switchWorkspace = useCallback((workspace: WorkspaceType) => {
     setState(prev => ({ ...prev, workspace, viewMode: 'tree' }));
     setSavedTreeState(null);
   }, []);
@@ -122,14 +164,16 @@ export const useOrganism = () => {
   const toggleCollapse = useCallback((id: string) => {
     saveToHistory();
     setState(prev => {
-      const currentItems = prev.workspace === 'work' ? prev.items : prev.personalItems;
+      const currentItems = prev.workspace === 'work' ? prev.items : prev.workspace === 'personal' ? prev.personalItems : prev.generatorItems;
       const newItems = toggleItemCollapse(currentItems, id);
       saveToDatabase(newItems, prev.workspace);
-      
+
       if (prev.workspace === 'work') {
         return { ...prev, items: newItems };
-      } else {
+      } else if (prev.workspace === 'personal') {
         return { ...prev, personalItems: newItems };
+      } else {
+        return { ...prev, generatorItems: newItems };
       }
     });
   }, [saveToHistory, saveToDatabase]);
@@ -146,14 +190,16 @@ export const useOrganism = () => {
     };
     
     setState(prev => {
-      const currentItems = prev.workspace === 'work' ? prev.items : prev.personalItems;
+      const currentItems = prev.workspace === 'work' ? prev.items : prev.workspace === 'personal' ? prev.personalItems : prev.generatorItems;
       const newItems = [...currentItems, newGoal];
       saveToDatabase(newItems, prev.workspace);
-      
+
       if (prev.workspace === 'work') {
         return { ...prev, items: newItems };
-      } else {
+      } else if (prev.workspace === 'personal') {
         return { ...prev, personalItems: newItems };
+      } else {
+        return { ...prev, generatorItems: newItems };
       }
     });
   }, [saveToHistory, saveToDatabase]);
@@ -171,14 +217,16 @@ export const useOrganism = () => {
     };
 
     setState(prev => {
-      const currentItems = prev.workspace === 'work' ? prev.items : prev.personalItems;
+      const currentItems = prev.workspace === 'work' ? prev.items : prev.workspace === 'personal' ? prev.personalItems : prev.generatorItems;
       const newItems = addItemToTree(currentItems, parentId, newItem);
       saveToDatabase(newItems, prev.workspace);
-      
+
       if (prev.workspace === 'work') {
         return { ...prev, items: newItems };
-      } else {
+      } else if (prev.workspace === 'personal') {
         return { ...prev, personalItems: newItems };
+      } else {
+        return { ...prev, generatorItems: newItems };
       }
     });
   }, [saveToHistory, saveToDatabase]);
@@ -186,28 +234,32 @@ export const useOrganism = () => {
   const deleteItem = useCallback((id: string) => {
     saveToHistory();
     setState(prev => {
-      const currentItems = prev.workspace === 'work' ? prev.items : prev.personalItems;
+      const currentItems = prev.workspace === 'work' ? prev.items : prev.workspace === 'personal' ? prev.personalItems : prev.generatorItems;
       const newItems = deleteItemFromTree(currentItems, id);
       saveToDatabase(newItems, prev.workspace);
-      
+
       if (prev.workspace === 'work') {
         return { ...prev, items: newItems };
-      } else {
+      } else if (prev.workspace === 'personal') {
         return { ...prev, personalItems: newItems };
+      } else {
+        return { ...prev, generatorItems: newItems };
       }
     });
   }, [saveToHistory, saveToDatabase]);
 
   const updateItemText = useCallback((id: string, text: string) => {
     setState(prev => {
-      const currentItems = prev.workspace === 'work' ? prev.items : prev.personalItems;
+      const currentItems = prev.workspace === 'work' ? prev.items : prev.workspace === 'personal' ? prev.personalItems : prev.generatorItems;
       const newItems = updateItemInTree(currentItems, id, text);
       saveToDatabase(newItems, prev.workspace);
-      
+
       if (prev.workspace === 'work') {
         return { ...prev, items: newItems };
-      } else {
+      } else if (prev.workspace === 'personal') {
         return { ...prev, personalItems: newItems };
+      } else {
+        return { ...prev, generatorItems: newItems };
       }
     });
   }, [saveToDatabase]);
@@ -215,14 +267,16 @@ export const useOrganism = () => {
   const showAll = useCallback(() => {
     saveToHistory();
     setState(prev => {
-      const currentItems = prev.workspace === 'work' ? prev.items : prev.personalItems;
+      const currentItems = prev.workspace === 'work' ? prev.items : prev.workspace === 'personal' ? prev.personalItems : prev.generatorItems;
       const newItems = expandAllItems(currentItems);
       saveToDatabase(newItems, prev.workspace);
-      
+
       if (prev.workspace === 'work') {
         return { ...prev, items: newItems, viewMode: 'tree' };
-      } else {
+      } else if (prev.workspace === 'personal') {
         return { ...prev, personalItems: newItems, viewMode: 'tree' };
+      } else {
+        return { ...prev, generatorItems: newItems, viewMode: 'tree' };
       }
     });
     setSavedTreeState(null);
@@ -230,23 +284,29 @@ export const useOrganism = () => {
 
   const undo = useCallback(() => {
     setState(prev => {
-      const currentHistory = prev.workspace === 'work' ? prev.history : prev.personalHistory;
+      const currentHistory = prev.workspace === 'work' ? prev.history : prev.workspace === 'personal' ? prev.personalHistory : prev.generatorHistory;
       if (currentHistory.length === 0) return prev;
-      
+
       const previousState = currentHistory[currentHistory.length - 1];
       saveToDatabase(previousState, prev.workspace);
-      
+
       if (prev.workspace === 'work') {
         return {
           ...prev,
           items: previousState,
           history: prev.history.slice(0, -1)
         };
-      } else {
+      } else if (prev.workspace === 'personal') {
         return {
           ...prev,
           personalItems: previousState,
           personalHistory: prev.personalHistory.slice(0, -1)
+        };
+      } else {
+        return {
+          ...prev,
+          generatorItems: previousState,
+          generatorHistory: prev.generatorHistory.slice(0, -1)
         };
       }
     });
@@ -272,8 +332,10 @@ export const useOrganism = () => {
       setState(prev => {
         if (prev.workspace === 'work') {
           return { ...prev, items: savedTreeState, viewMode: 'tree' };
-        } else {
+        } else if (prev.workspace === 'personal') {
           return { ...prev, personalItems: savedTreeState, viewMode: 'tree' };
+        } else {
+          return { ...prev, generatorItems: savedTreeState, viewMode: 'tree' };
         }
       });
     } else {
@@ -294,16 +356,18 @@ export const useOrganism = () => {
   const reorderGoals = useCallback((sourceIndex: number, destinationIndex: number) => {
     saveToHistory();
     setState(prev => {
-      const currentItems = prev.workspace === 'work' ? prev.items : prev.personalItems;
+      const currentItems = prev.workspace === 'work' ? prev.items : prev.workspace === 'personal' ? prev.personalItems : prev.generatorItems;
       const newItems = [...currentItems];
       const [removed] = newItems.splice(sourceIndex, 1);
       newItems.splice(destinationIndex, 0, removed);
       saveToDatabase(newItems, prev.workspace);
-      
+
       if (prev.workspace === 'work') {
         return { ...prev, items: newItems };
-      } else {
+      } else if (prev.workspace === 'personal') {
         return { ...prev, personalItems: newItems };
+      } else {
+        return { ...prev, generatorItems: newItems };
       }
     });
   }, [saveToHistory, saveToDatabase]);
@@ -311,14 +375,16 @@ export const useOrganism = () => {
   const reorderChildren = useCallback((parentId: string, oldIndex: number, newIndex: number) => {
     saveToHistory();
     setState(prev => {
-      const currentItems = prev.workspace === 'work' ? prev.items : prev.personalItems;
+      const currentItems = prev.workspace === 'work' ? prev.items : prev.workspace === 'personal' ? prev.personalItems : prev.generatorItems;
       const newItems = reorderItemChildren(currentItems, parentId, oldIndex, newIndex);
       saveToDatabase(newItems, prev.workspace);
-      
+
       if (prev.workspace === 'work') {
         return { ...prev, items: newItems };
-      } else {
+      } else if (prev.workspace === 'personal') {
         return { ...prev, personalItems: newItems };
+      } else {
+        return { ...prev, generatorItems: newItems };
       }
     });
   }, [saveToHistory, saveToDatabase]);
@@ -452,7 +518,7 @@ const collapseItemsByIds = (items: TaskItem[], targetIds: string[]): TaskItem[] 
   });
 };
 
-const flattenVisibleItems = (items: TaskItem[], path: string[] = [], workspace?: 'work' | 'personal'): TodayItem[] => {
+const flattenVisibleItems = (items: TaskItem[], path: string[] = [], workspace?: WorkspaceType): TodayItem[] => {
   const result: TodayItem[] = [];
   
   const collectExpandedTasks = (items: TaskItem[], currentPath: string[] = []) => {

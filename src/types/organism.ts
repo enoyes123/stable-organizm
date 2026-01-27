@@ -8,14 +8,18 @@ export interface TaskItem {
   parentId?: string;
 }
 
+export type WorkspaceType = 'work' | 'personal' | 'generator';
+
 export interface OrganismState {
   items: TaskItem[];
   personalItems: TaskItem[];
+  generatorItems: TaskItem[];
   selectedId: string | null;
   viewMode: 'tree' | 'today';
-  workspace: 'work' | 'personal';
+  workspace: WorkspaceType;
   history: TaskItem[][];
   personalHistory: TaskItem[][];
+  generatorHistory: TaskItem[][];
 }
 
 export interface TodayItem {
@@ -24,5 +28,5 @@ export interface TodayItem {
   type: 'goal' | 'subgoal' | 'task';
   originalPath: string[];
   priority: number;
-  workspace?: 'work' | 'personal';
+  workspace?: WorkspaceType;
 }

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { TaskItem } from '@/types/organism';
+import { TaskItem, WorkspaceType } from '@/types/organism';
 
 // Define a simple interface for database items to avoid type complexity
 interface DatabaseItem {
@@ -148,7 +148,7 @@ export const useOrganismDatabase = () => {
 
       // Flatten the tree structure and save
       const flatItems = flattenTreeForDatabase(items, 0, 'personal', userId);
-      
+
       if (flatItems.length > 0) {
         const { error } = await supabase
           .from('organism_items')
@@ -160,6 +160,51 @@ export const useOrganismDatabase = () => {
       }
     } catch (error) {
       console.error('Error saving personal items:', error);
+    }
+  };
+
+  // Generator workspace is SHARED - all authenticated users can see and edit
+  const loadGeneratorItemsFromDatabase = async (userId: string): Promise<TaskItem[]> => {
+    try {
+      // Load ALL generator items (shared workspace - no user_id filter)
+      const { data, error } = await supabase
+        .from('organism_items')
+        .select('*')
+        .eq('workspace', 'generator')
+        .order('sort_order');
+
+      if (error) {
+        console.error('Error loading generator items:', error);
+        return [];
+      }
+
+      return buildTreeFromFlatData(data || []);
+    } catch (error) {
+      console.error('Error loading generator items:', error);
+      return [];
+    }
+  };
+
+  const saveGeneratorItemsToDatabase = async (items: TaskItem[], userId: string) => {
+    try {
+      // Clear ALL existing generator items (shared workspace)
+      await supabase.from('organism_items').delete()
+        .eq('workspace', 'generator');
+
+      // Flatten the tree structure and save
+      const flatItems = flattenTreeForDatabase(items, 0, 'generator', userId);
+
+      if (flatItems.length > 0) {
+        const { error } = await supabase
+          .from('organism_items')
+          .insert(flatItems);
+
+        if (error) {
+          console.error('Error saving generator items:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Error saving generator items:', error);
     }
   };
 
@@ -196,7 +241,7 @@ export const useOrganismDatabase = () => {
     return rootItems;
   };
 
-  const flattenTreeForDatabase = (items: TaskItem[], sortOrderStart = 0, workspace: 'work' | 'personal', userId: string): DatabaseItem[] => {
+  const flattenTreeForDatabase = (items: TaskItem[], sortOrderStart = 0, workspace: WorkspaceType, userId: string): DatabaseItem[] => {
     const result: DatabaseItem[] = [];
     let currentSortOrder = sortOrderStart;
 
@@ -228,7 +273,9 @@ export const useOrganismDatabase = () => {
     setIsLoading,
     loadItemsFromDatabase,
     loadPersonalItemsFromDatabase,
+    loadGeneratorItemsFromDatabase,
     saveItemsToDatabase,
-    savePersonalItemsToDatabase
+    savePersonalItemsToDatabase,
+    saveGeneratorItemsToDatabase
   };
 };
