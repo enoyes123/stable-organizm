@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { TaskItem } from '@/types/organism';
-import { Plus, Trash2, Minus } from 'lucide-react';
+import { Plus, Trash2, Minus, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
@@ -406,17 +406,21 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                             <div
                               ref={provided.innerRef}
                               {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className={`transition-all duration-200 ease-ios ${
+                              className={`flex items-center gap-1 transition-all duration-200 ease-ios ${
                                 snapshot.isDragging
                                   ? 'scale-98 opacity-90 shadow-ios-lg'
                                   : ''
                               }`}
-                              style={{
-                                ...provided.draggableProps.style,
-                                cursor: snapshot.isDragging ? 'grabbing' : 'grab'
-                              }}
+                              style={provided.draggableProps.style}
                             >
+                              {/* Drag handle - only this element triggers drag */}
+                              <div
+                                {...provided.dragHandleProps}
+                                className="flex items-center justify-center p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 cursor-grab active:cursor-grabbing opacity-40 hover:opacity-100 transition-opacity"
+                                title="Drag to reorder"
+                              >
+                                <GripVertical size={14} className="text-gray-400" />
+                              </div>
                               <OrganismItem
                                 key={child.id}
                                 item={child}
