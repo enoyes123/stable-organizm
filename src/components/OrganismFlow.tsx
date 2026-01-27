@@ -54,10 +54,14 @@ export const OrganismFlow: React.FC = () => {
 
     const handleMouseMove = (e: MouseEvent) => {
       const windowWidth = window.innerWidth;
-      const edgeThreshold = 20; // pixels from right edge to trigger
+      // Content area is max-w-7xl (1280px) + padding, roughly ends around 1300px or less
+      // Trigger when cursor is in the right half of the empty space after content
+      const contentEndApprox = Math.min(1300, windowWidth * 0.7); // Content ends around 1300px or 70% of screen
+      const emptySpaceStart = contentEndApprox;
+      const triggerPoint = emptySpaceStart + (windowWidth - emptySpaceStart) / 2; // Halfway through empty space
 
-      // Show panel when cursor is within edgeThreshold of right edge
-      if (e.clientX >= windowWidth - edgeThreshold) {
+      // Show panel when cursor passes the halfway point of the empty area
+      if (e.clientX >= triggerPoint) {
         setShowKeyLinks(true);
       }
     };
