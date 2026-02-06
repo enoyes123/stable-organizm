@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { useOrganism } from '@/hooks/useOrganism';
+import { useAuth } from '@/hooks/useAuth';
 import { OrganismItem } from './OrganismItem';
 import { TodayView } from './TodayView';
 import { TodayWindow } from './TodayWindow';
@@ -12,9 +13,14 @@ import { useNavigate } from 'react-router-dom';
 
 export const OrganismFlow: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isFullscreen, setIsFullscreen] = React.useState(false);
   const [showKeyLinks, setShowKeyLinks] = React.useState(false);
   const keyLinksPanelRef = useRef<HTMLDivElement>(null);
+
+  // Check if user is criley5 - they only see Generator tab
+  const isGeneratorOnlyUser = user?.email === 'criley5@babson.edu';
+
   const {
     state,
     todayItems,
@@ -44,6 +50,13 @@ export const OrganismFlow: React.FC = () => {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
+
+  // Auto-switch to Generator workspace for criley5
+  useEffect(() => {
+    if (isGeneratorOnlyUser && state.workspace !== 'generator') {
+      switchWorkspace('generator');
+    }
+  }, [isGeneratorOnlyUser, state.workspace, switchWorkspace]);
 
   // Handle hover near right edge to show Key Links panel (Generator workspace only)
   useEffect(() => {
@@ -449,28 +462,32 @@ export const OrganismFlow: React.FC = () => {
 
           {/* Workspace Toggle - iOS Segmented Control Style */}
           <div className="inline-flex rounded-xl bg-secondary p-1">
-            <button
-              onClick={() => switchWorkspace('work')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-ios ${
-                state.workspace === 'work'
-                  ? 'bg-card text-foreground shadow-ios'
-                  : 'bg-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Briefcase size={14} className="inline mr-1.5" />
-              Work
-            </button>
-            <button
-              onClick={() => switchWorkspace('personal')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-ios ${
-                state.workspace === 'personal'
-                  ? 'bg-card text-foreground shadow-ios'
-                  : 'bg-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <User size={14} className="inline mr-1.5" />
-              Personal
-            </button>
+            {!isGeneratorOnlyUser && (
+              <>
+                <button
+                  onClick={() => switchWorkspace('work')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-ios ${
+                    state.workspace === 'work'
+                      ? 'bg-card text-foreground shadow-ios'
+                      : 'bg-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Briefcase size={14} className="inline mr-1.5" />
+                  Work
+                </button>
+                <button
+                  onClick={() => switchWorkspace('personal')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-ios ${
+                    state.workspace === 'personal'
+                      ? 'bg-card text-foreground shadow-ios'
+                      : 'bg-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <User size={14} className="inline mr-1.5" />
+                  Personal
+                </button>
+              </>
+            )}
             <button
               onClick={() => switchWorkspace('generator')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-ios ${
