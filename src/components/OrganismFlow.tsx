@@ -58,38 +58,21 @@ export const OrganismFlow: React.FC = () => {
     }
   }, [isGeneratorOnlyUser, state.workspace, switchWorkspace]);
 
-  // Handle hover near right edge to show Key Links panel
+  // Handle hover near right edge to show Links panel (works for all workspaces)
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const windowWidth = window.innerWidth;
-      // Task nodes are the widest at ~34vw, so content ends around 40-50% of screen width
-      // Trigger when cursor is past 60% of screen width (halfway between content and edge)
+      // Trigger when cursor is past 60% of screen width
       const triggerPoint = windowWidth * 0.6;
 
-      // Show panel when cursor passes the trigger point
       if (e.clientX >= triggerPoint) {
         setShowKeyLinks(true);
       }
     };
 
-    const handleMouseLeave = (e: MouseEvent) => {
-      // Hide panel when mouse leaves the panel area (but not when moving within it)
-      const panel = keyLinksPanelRef.current;
-      if (panel && !panel.contains(e.relatedTarget as Node)) {
-        // Check if mouse is still near right edge
-        const windowWidth = window.innerWidth;
-        if (e.clientX < windowWidth - 400) { // 400px is panel width
-          setShowKeyLinks(false);
-        }
-      }
-    };
-
     document.addEventListener('mousemove', handleMouseMove);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, [state.workspace]);
+    return () => document.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const toggleFullscreen = async () => {
     if (!document.fullscreenElement) {
