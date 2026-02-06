@@ -58,13 +58,8 @@ export const OrganismFlow: React.FC = () => {
     }
   }, [isGeneratorOnlyUser, state.workspace, switchWorkspace]);
 
-  // Handle hover near right edge to show Key Links panel (Generator workspace only)
+  // Handle hover near right edge to show Key Links panel
   useEffect(() => {
-    if (state.workspace !== 'generator') {
-      setShowKeyLinks(false);
-      return;
-    }
-
     const handleMouseMove = (e: MouseEvent) => {
       const windowWidth = window.innerWidth;
       // Content area is max-w-7xl (1280px) + padding, roughly ends around 1300px or less
@@ -640,25 +635,23 @@ export const OrganismFlow: React.FC = () => {
             )}
           </div>
 
-        {/* Key Links slide-in panel (Generator workspace only) */}
-        {state.workspace === 'generator' && (
-          <div
-            ref={keyLinksPanelRef}
-            className={`absolute top-0 right-0 h-full w-[400px] bg-card shadow-2xl border-l border-border transition-transform duration-300 ease-ios z-20 ${
-              showKeyLinks ? 'translate-x-0' : 'translate-x-full'
-            }`}
-            onMouseLeave={() => setShowKeyLinks(false)}
-          >
-            <KeyLinksPanel isVisible={true} />
-          </div>
-        )}
+        {/* Key Links slide-in panel */}
+        <div
+          ref={keyLinksPanelRef}
+          className={`absolute top-0 right-0 h-full w-[400px] bg-card shadow-2xl border-l border-border transition-transform duration-300 ease-ios z-20 ${
+            showKeyLinks ? 'translate-x-0' : 'translate-x-full'
+          }`}
+          onMouseLeave={() => setShowKeyLinks(false)}
+        >
+          <KeyLinksPanel isVisible={true} workspace={state.workspace} />
+        </div>
 
-        {/* Hover trigger zone for Key Links (Generator workspace only) */}
-        {state.workspace === 'generator' && !showKeyLinks && (
+        {/* Hover trigger zone for Key Links */}
+        {!showKeyLinks && (
           <div
             className="absolute top-0 right-0 w-3 h-full bg-gradient-to-l from-gray-300/30 to-transparent hover:from-blue-400/40 transition-all cursor-e-resize z-10"
             onMouseEnter={() => setShowKeyLinks(true)}
-            title="Hover to show Key Links"
+            title="Hover to show Links"
           />
         )}
       </div>

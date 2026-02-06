@@ -1,14 +1,25 @@
 import React, { useState } from 'react';
 import { useKeyLinks, KeyLink } from '@/hooks/useKeyLinks';
+import { WorkspaceType } from '@/types/organism';
 import { Plus, Trash2, GripVertical, Link, Pencil } from 'lucide-react';
 
 interface KeyLinksPanelProps {
   isVisible: boolean;
+  workspace: WorkspaceType;
 }
 
-export const KeyLinksPanel: React.FC<KeyLinksPanelProps> = ({ isVisible }) => {
-  const { links, isLoading, addLink, updateLink, deleteLink, reorderLinks } = useKeyLinks();
+export const KeyLinksPanel: React.FC<KeyLinksPanelProps> = ({ isVisible, workspace }) => {
+  const { links, isLoading, addLink, updateLink, deleteLink, reorderLinks } = useKeyLinks(workspace);
   const [isAdding, setIsAdding] = useState(false);
+
+  const getPanelTitle = () => {
+    switch (workspace) {
+      case 'work': return 'Work Links';
+      case 'personal': return 'Personal Links';
+      case 'generator': return 'Key Links';
+      default: return 'Links';
+    }
+  };
   const [newTitle, setNewTitle] = useState('');
   const [newUrl, setNewUrl] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -96,7 +107,7 @@ export const KeyLinksPanel: React.FC<KeyLinksPanelProps> = ({ isVisible }) => {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
           <Link size={20} />
-          Key Links
+          {getPanelTitle()}
         </h2>
         {!isAdding && (
           <button

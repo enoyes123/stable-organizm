@@ -1,17 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { WorkspaceType } from '@/types/organism';
 
 export interface KeyLink {
   id: string;
   title: string;
   url: string;
   sort_order: number;
+  workspace?: string;
   created_at?: string;
   created_by?: string;
 }
 
-export const useKeyLinks = () => {
+export const useKeyLinks = (workspace: WorkspaceType = 'generator') => {
   const { user } = useAuth();
   const [links, setLinks] = useState<KeyLink[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,6 +25,7 @@ export const useKeyLinks = () => {
       const { data, error } = await supabase
         .from('key_links')
         .select('*')
+        .eq('workspace', workspace)
         .order('sort_order');
 
       if (error) {
@@ -36,23 +39,24 @@ export const useKeyLinks = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, workspace]);
 
   useEffect(() => {
     loadLinks();
 
-    // Subscribe to realtime changes for key_links table
+    // Subscribe to realtime changes for key_links table filtered by workspace
     const channel = supabase
-      .channel('key_links_changes')
+      .channel(`key_links_changes_${workspace}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'key_links'
+          table: 'key_links',
+          filter: `workspace=eq.${workspace}`
         },
         () => {
-          // Reload all links when any change happens
+          // Reload links when any change happens in this workspace
           loadLinks();
         }
       )
@@ -61,7 +65,7 @@ export const useKeyLinks = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [loadLinks]);
+  }, [loadLinks, workspace]);
 
   const addLink = useCallback(async (title: string, url: string) => {
     if (!user?.id) return;
@@ -70,6 +74,7 @@ export const useKeyLinks = () => {
       title,
       url,
       sort_order: links.length,
+      workspace,
       created_by: user.id
     };
 
@@ -89,7 +94,7 @@ export const useKeyLinks = () => {
     } catch (error) {
       console.error('Error adding key link:', error);
     }
-  }, [user?.id, links.length]);
+  }, [user?.id, links.length, workspace]);
 
   const updateLink = useCallback(async (id: string, title: string, url: string) => {
     try {
