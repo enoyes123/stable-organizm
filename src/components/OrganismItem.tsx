@@ -408,16 +408,20 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                               {...provided.draggableProps}
                               className={`flex items-center gap-1 transition-all duration-200 ease-ios ${
                                 snapshot.isDragging
-                                  ? 'scale-98 opacity-90 shadow-ios-lg'
+                                  ? 'scale-98 opacity-90 shadow-ios-lg z-50'
                                   : ''
                               }`}
                               style={provided.draggableProps.style}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onPointerDown={(e) => e.stopPropagation()}
                             >
                               {/* Drag handle - only this element triggers drag */}
                               <div
                                 {...provided.dragHandleProps}
                                 className="flex items-center justify-center p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 cursor-grab active:cursor-grabbing opacity-40 hover:opacity-100 transition-opacity"
                                 title="Drag to reorder"
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onPointerDown={(e) => e.stopPropagation()}
                               >
                                 <GripVertical size={14} className="text-gray-400" />
                               </div>
