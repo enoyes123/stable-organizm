@@ -62,13 +62,11 @@ export const OrganismFlow: React.FC = () => {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const windowWidth = window.innerWidth;
-      // Content area is max-w-7xl (1280px) + padding, roughly ends around 1300px or less
-      // Trigger when cursor is in the right half of the empty space after content
-      const contentEndApprox = Math.min(1300, windowWidth * 0.7); // Content ends around 1300px or 70% of screen
-      const emptySpaceStart = contentEndApprox;
-      const triggerPoint = emptySpaceStart + (windowWidth - emptySpaceStart) / 2; // Halfway through empty space
+      // Task nodes are the widest at ~34vw, so content ends around 40-50% of screen width
+      // Trigger when cursor is past 60% of screen width (halfway between content and edge)
+      const triggerPoint = windowWidth * 0.6;
 
-      // Show panel when cursor passes the halfway point of the empty area
+      // Show panel when cursor passes the trigger point
       if (e.clientX >= triggerPoint) {
         setShowKeyLinks(true);
       }
