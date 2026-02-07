@@ -8,7 +8,7 @@ import { TodayWindow } from './TodayWindow';
 import { ThemeToggle } from './ThemeToggle';
 import { KeyLinksPanel } from './KeyLinksPanel';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, Eye, Calendar, Plus, ArrowLeft, Briefcase, User, Maximize, Minimize, Users, Link } from 'lucide-react';
+import { RotateCcw, Eye, Calendar, Plus, ArrowLeft, Briefcase, User, Maximize, Minimize, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const OrganismFlow: React.FC = () => {
@@ -58,21 +58,6 @@ export const OrganismFlow: React.FC = () => {
     }
   }, [isGeneratorOnlyUser, state.workspace, switchWorkspace]);
 
-  // Handle hover near right edge to show Links panel (works for all workspaces)
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const windowWidth = window.innerWidth;
-      // Trigger when cursor is past 60% of screen width
-      const triggerPoint = windowWidth * 0.6;
-
-      if (e.clientX >= triggerPoint) {
-        setShowKeyLinks(true);
-      }
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    return () => document.removeEventListener('mousemove', handleMouseMove);
-  }, []);
 
   const toggleFullscreen = async () => {
     if (!document.fullscreenElement) {
@@ -506,14 +491,6 @@ export const OrganismFlow: React.FC = () => {
           >
             <Eye size={16} />
             Show All
-          </button>
-
-          <button
-            onClick={() => setShowKeyLinks(!showKeyLinks)}
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-sm transition-all duration-200 ease-ios active:scale-95 flex items-center gap-2"
-          >
-            <Link size={16} />
-            Links
           </button>
 
           <button
