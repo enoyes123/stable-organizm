@@ -404,17 +404,42 @@ export const useOrganism = () => {
 
     const clonedItem = cloneWithNewIds(item);
 
-    // If it's not a goal, we need to convert it to a goal for the top level
-    // Or keep it as-is if it's a subgoal/task being added
+    // Create the proper hierarchy to maintain the item's level
     let itemToAdd: TaskItem;
+
     if (item.type === 'goal') {
-      itemToAdd = clonedItem;
+      // Goal stays as goal with all children
+      itemToAdd = { ...clonedItem, parentId: undefined };
     } else if (item.type === 'subgoal') {
-      // Convert subgoal to goal when copying to top level
-      itemToAdd = { ...clonedItem, type: 'goal', parentId: undefined };
+      // Create a container goal for the subgoal
+      const goalId = Date.now().toString() + '-goal-' + Math.random().toString(36).substr(2, 9);
+      itemToAdd = {
+        id: goalId,
+        text: `Copied: ${item.text}`,
+        type: 'goal',
+        isCollapsed: false,
+        parentId: undefined,
+        children: [{ ...clonedItem, parentId: goalId }]
+      };
     } else {
-      // Task becomes a goal with no children when copied to top level
-      itemToAdd = { ...clonedItem, type: 'goal', parentId: undefined, children: [] };
+      // Task: create container goal and subgoal
+      const goalId = Date.now().toString() + '-goal-' + Math.random().toString(36).substr(2, 9);
+      const subgoalId = Date.now().toString() + '-subgoal-' + Math.random().toString(36).substr(2, 9);
+      itemToAdd = {
+        id: goalId,
+        text: `Copied: ${item.text}`,
+        type: 'goal',
+        isCollapsed: false,
+        parentId: undefined,
+        children: [{
+          id: subgoalId,
+          text: 'Copied tasks',
+          type: 'subgoal',
+          isCollapsed: false,
+          parentId: goalId,
+          children: [{ ...clonedItem, parentId: subgoalId, children: [] }]
+        }]
+      };
     }
 
     setState(prev => {
