@@ -1,9 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { TaskItem } from '@/types/organism';
-import { Plus, Trash2, Minus, GripVertical, Copy, Strikethrough } from 'lucide-react';
+import { Plus, Trash2, Minus, GripVertical, Copy, Strikethrough, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { GOAL_ICONS } from '@/constants/icons';
+
+// Global state to track which icon picker is open (only one at a time)
+let globalCloseIconPicker: (() => void) | null = null;
 
 // Connector lines component that draws curved bezier paths from parent to children
 const ConnectorLines: React.FC<{ parentRef: React.RefObject<HTMLElement>; childrenRef: React.RefObject<HTMLElement>; childCount: number }> = ({ parentRef, childrenRef, childCount }) => {
@@ -143,8 +147,28 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
 
   const handleIconClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // Close any other open icon picker first
+    if (globalCloseIconPicker && globalCloseIconPicker !== closeThisPicker) {
+      globalCloseIconPicker();
+    }
     setShowIconPicker(!showIconPicker);
   };
+
+  const closeThisPicker = useCallback(() => {
+    setShowIconPicker(false);
+  }, []);
+
+  // Register this picker's close function when open
+  useEffect(() => {
+    if (showIconPicker) {
+      globalCloseIconPicker = closeThisPicker;
+    }
+    return () => {
+      if (globalCloseIconPicker === closeThisPicker) {
+        globalCloseIconPicker = null;
+      }
+    };
+  }, [showIconPicker, closeThisPicker]);
 
   const handleSelectIcon = (icon: string) => {
     if (onUpdateIcon) {
@@ -346,31 +370,55 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                 >
                   {item.icon}
                 </span>
-                {showIconPicker && (
-                  <>
+                {showIconPicker && createPortal(
+                  <div className="icon-picker-portal" style={{ position: 'fixed', inset: 0, zIndex: 99999 }}>
                     {/* Backdrop overlay */}
-                    <div className="fixed inset-0 bg-black/20 z-[9998]" onClick={() => setShowIconPicker(false)} />
-                    {/* Icon picker */}
+                    <div
+                      style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 99999 }}
+                      onClick={() => setShowIconPicker(false)}
+                    />
+                    {/* Icon picker modal */}
                     <div
                       ref={iconPickerRef}
-                      className="icon-picker fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-5 bg-white dark:bg-gray-800 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] border-2 border-gray-300 dark:border-gray-600 z-[9999] grid grid-cols-8 gap-2 w-[380px] max-h-[70vh] overflow-y-auto"
+                      style={{
+                        position: 'fixed',
+                        left: '50%',
+                        top: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        zIndex: 100000
+                      }}
+                      className="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border-2 border-gray-300 dark:border-gray-600"
                     >
-                      {GOAL_ICONS.map((icon) => (
+                      {/* Header with close button */}
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-lg font-semibold text-gray-700 dark:text-gray-200">Choose Icon</span>
                         <button
-                          key={icon}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSelectIcon(icon);
-                          }}
-                          className={`w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-125 transition-all text-2xl ${
-                            item.icon === icon ? 'bg-blue-100 dark:bg-blue-900 ring-2 ring-blue-500' : ''
-                          }`}
+                          onClick={() => setShowIconPicker(false)}
+                          className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                         >
-                          {icon}
+                          <X size={20} className="text-gray-500" />
                         </button>
-                      ))}
+                      </div>
+                      {/* Icon grid */}
+                      <div className="grid grid-cols-10 gap-2 w-[440px] max-h-[60vh] overflow-y-auto p-1">
+                        {GOAL_ICONS.map((icon, index) => (
+                          <button
+                            key={`${icon}-${index}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectIcon(icon);
+                            }}
+                            className={`w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-125 transition-all text-2xl ${
+                              item.icon === icon ? 'bg-blue-100 dark:bg-blue-900 ring-2 ring-blue-500' : ''
+                            }`}
+                          >
+                            {icon}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </>
+                  </div>,
+                  document.body
                 )}
               </div>
             )}
