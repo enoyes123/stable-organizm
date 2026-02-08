@@ -465,7 +465,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                 onChange={handleEditTextChange}
                 onBlur={handleTextSubmit}
                 onKeyDown={handleTextKeyDown}
-                className="bg-transparent border-none outline-none text-left flex-1 min-w-0 text-inherit focus:ring-0"
+                className="bg-transparent border-none outline-none text-left w-full text-inherit focus:ring-0"
                 style={{
                   fontSize: `${editFontSize}px`,
                   whiteSpace: 'nowrap'
@@ -475,12 +475,11 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
             ) : (
               <span
                 ref={textRef}
-                className={`edit-text cursor-text leading-tight text-left flex-1 min-w-0 ${item.isStrikethrough ? 'line-through opacity-60' : ''}`}
+                className={`edit-text cursor-text leading-tight text-left ${item.isStrikethrough ? 'line-through opacity-60' : ''}`}
                 style={{
                   fontSize: `${fontSize}px`,
                   whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
+                  overflow: 'hidden'
                 }}
               >
                 {item.text}
