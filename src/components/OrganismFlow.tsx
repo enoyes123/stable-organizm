@@ -502,7 +502,11 @@ export const OrganismFlow: React.FC = () => {
           {!isElizabethOnlyUser && (
             <button
               onClick={() => switchWorkspace('elizabeth')}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-pink-500 text-white hover:bg-pink-600"
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                state.workspace === 'elizabeth'
+                  ? 'bg-secondary text-muted-foreground'
+                  : 'bg-secondary/30 text-muted-foreground/50 hover:bg-secondary/50 hover:text-muted-foreground/70'
+              }`}
             >
               Elizabeth
             </button>
