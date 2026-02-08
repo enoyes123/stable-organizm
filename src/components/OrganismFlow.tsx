@@ -555,22 +555,25 @@ export const OrganismFlow: React.FC = () => {
             Show All
           </button>
 
-          <button
-            onClick={state.viewMode === 'tree' ? switchToTodayView : returnToTreeView}
-            className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-foreground rounded-xl text-sm transition-all duration-200 ease-ios active:scale-95 flex items-center gap-2"
-          >
-            {state.viewMode === 'tree' ? (
-              <>
-                <Calendar size={16} />
-                Today
-              </>
-            ) : (
-              <>
-                <ArrowLeft size={16} />
-                Return
-              </>
-            )}
-          </button>
+          {/* Today button - hide for Generator and Elizabeth workspaces */}
+          {state.workspace !== 'generator' && state.workspace !== 'elizabeth' && (
+            <button
+              onClick={state.viewMode === 'tree' ? switchToTodayView : returnToTreeView}
+              className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-foreground rounded-xl text-sm transition-all duration-200 ease-ios active:scale-95 flex items-center gap-2"
+            >
+              {state.viewMode === 'tree' ? (
+                <>
+                  <Calendar size={16} />
+                  Today
+                </>
+              ) : (
+                <>
+                  <ArrowLeft size={16} />
+                  Return
+                </>
+              )}
+            </button>
+          )}
 
           <button
             onClick={toggleFullscreen}
