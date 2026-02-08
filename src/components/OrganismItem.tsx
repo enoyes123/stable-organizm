@@ -360,16 +360,27 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
             tabIndex={0}
           >
             {/* Icon for goals and subgoals - clickable to change */}
-            {(item.type === 'goal' || item.type === 'subgoal') && item.icon && onUpdateIcon && (
+            {(item.type === 'goal' || item.type === 'subgoal') && onUpdateIcon && (
               <div className="relative goal-icon">
-                <span
-                  onClick={handleIconClick}
-                  className="mr-2 cursor-pointer hover:opacity-70 transition-opacity select-none"
-                  style={{ fontSize: `${fontSize + 2}px` }}
-                  title="Click to change icon"
-                >
-                  {item.icon}
-                </span>
+                {item.icon ? (
+                  <span
+                    onClick={handleIconClick}
+                    className="mr-2 cursor-pointer hover:opacity-70 transition-opacity select-none"
+                    style={{ fontSize: `${fontSize + 2}px` }}
+                    title="Click to change icon"
+                  >
+                    {item.icon}
+                  </span>
+                ) : (
+                  <span
+                    onClick={handleIconClick}
+                    className="mr-2 cursor-pointer hover:opacity-70 transition-opacity select-none text-gray-300 dark:text-gray-600"
+                    style={{ fontSize: `${fontSize + 2}px` }}
+                    title="Click to add icon"
+                  >
+                    ○
+                  </span>
+                )}
                 {showIconPicker && createPortal(
                   <div className="icon-picker-portal" style={{ position: 'fixed', inset: 0, zIndex: 99999 }}>
                     {/* Backdrop overlay */}
@@ -401,6 +412,20 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                       </div>
                       {/* Icon grid */}
                       <div className="grid grid-cols-10 gap-2 w-[440px] max-h-[60vh] overflow-y-auto p-1">
+                        {/* No icon option */}
+                        <button
+                          key="no-icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectIcon('');
+                          }}
+                          className={`w-10 h-10 flex items-center justify-center rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 hover:scale-125 transition-all text-lg text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 ${
+                            !item.icon ? 'bg-red-100 dark:bg-red-900/30 ring-2 ring-red-400' : ''
+                          }`}
+                          title="No icon"
+                        >
+                          ✕
+                        </button>
                         {GOAL_ICONS.map((icon, index) => (
                           <button
                             key={`${icon}-${index}`}

@@ -668,7 +668,8 @@ const toggleItemStrikethrough = (items: TaskItem[], targetId: string): TaskItem[
 const updateItemIcon = (items: TaskItem[], targetId: string, icon: string): TaskItem[] => {
   return items.map(item => {
     if (item.id === targetId) {
-      return { ...item, icon };
+      // Empty string means "no icon" - set to undefined
+      return { ...item, icon: icon || undefined };
     }
     return { ...item, children: updateItemIcon(item.children, targetId, icon) };
   });
