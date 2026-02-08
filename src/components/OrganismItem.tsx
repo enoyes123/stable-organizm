@@ -302,7 +302,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
   };
 
   const getNodeStyles = () => {
-    const baseStyles = 'cursor-pointer transition-all duration-200 ease-ios relative inline-flex items-center justify-start text-left rounded-xl shadow-ios hover:shadow-ios-lg hover:-translate-y-0.5 h-[44px] px-5';
+    const baseStyles = 'cursor-pointer transition-all duration-200 ease-ios relative inline-flex items-center justify-start text-left rounded-xl shadow-ios hover:shadow-ios-lg hover:-translate-y-0.5 h-[44px] px-3';
 
     switch (item.type) {
       case 'goal':
@@ -465,7 +465,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                 onChange={handleEditTextChange}
                 onBlur={handleTextSubmit}
                 onKeyDown={handleTextKeyDown}
-                className="bg-transparent border-none outline-none text-left w-full text-inherit focus:ring-0"
+                className="bg-transparent border-none outline-none text-left flex-1 min-w-0 text-inherit focus:ring-0"
                 style={{
                   fontSize: `${editFontSize}px`,
                   whiteSpace: 'nowrap'
@@ -475,11 +475,12 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
             ) : (
               <span
                 ref={textRef}
-                className={`edit-text cursor-text leading-tight text-left ${item.isStrikethrough ? 'line-through opacity-60' : ''}`}
+                className={`edit-text cursor-text leading-tight text-left flex-1 min-w-0 ${item.isStrikethrough ? 'line-through opacity-60' : ''}`}
                 style={{
                   fontSize: `${fontSize}px`,
                   whiteSpace: 'nowrap',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
                 }}
               >
                 {item.text}
