@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { TaskItem } from '@/types/organism';
+import { TaskItem, WorkspaceColors } from '@/types/organism';
 import { Plus, Trash2, Minus, GripVertical, Copy, Strikethrough, X, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
@@ -87,6 +87,7 @@ interface OrganismItemProps {
   item: TaskItem;
   level: number;
   workspace?: WorkspaceType;
+  customColors?: WorkspaceColors | null;
   onToggleCollapse: (id: string) => void;
   onAddItem: (parentId: string, type: 'subgoal' | 'task') => void;
   onDeleteItem: (id: string) => void;
@@ -102,6 +103,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
   item,
   level,
   workspace = 'work',
+  customColors,
   onToggleCollapse,
   onAddItem,
   onDeleteItem,
@@ -318,6 +320,21 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
   const getNodeStyles = () => {
     const baseStyles = 'cursor-pointer transition-all duration-200 ease-ios relative inline-flex items-center justify-start text-left rounded-xl shadow-ios hover:shadow-ios-lg hover:-translate-y-0.5 h-[44px] px-3';
 
+    // When custom colors are provided, use simplified styles (background via inline style)
+    if (customColors) {
+      switch (item.type) {
+        case 'goal':
+          return `${baseStyles} text-white`;
+        case 'subgoal':
+          return `${baseStyles} text-white`;
+        case 'task':
+          return `${baseStyles} border border-gray-600 text-white`;
+        default:
+          return `${baseStyles} text-white`;
+      }
+    }
+
+    // Default styles for work/personal workspaces
     switch (item.type) {
       case 'goal':
         return `${baseStyles} bg-gray-200 dark:bg-[#323236] text-gray-900 dark:text-white`;
@@ -375,6 +392,13 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
           <div
             ref={containerRef}
             className={cn(getNodeStyles(), "w-full")}
+            style={customColors ? {
+              backgroundColor: item.type === 'goal'
+                ? customColors.goalNode
+                : item.type === 'subgoal'
+                  ? customColors.subgoalNode
+                  : customColors.taskNode
+            } : undefined}
             onMouseEnter={handleNodeMouseEnter}
             onMouseLeave={handleNodeMouseLeave}
             onMouseMove={handleNodeMouseMove}
@@ -657,6 +681,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                                 item={child}
                                 level={level + 1}
                                 workspace={workspace}
+                                customColors={customColors}
                                 onToggleCollapse={onToggleCollapse}
                                 onAddItem={onAddItem}
                                 onDeleteItem={onDeleteItem}
@@ -683,6 +708,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                   item={child}
                   level={level + 1}
                   workspace={workspace}
+                  customColors={customColors}
                   onToggleCollapse={onToggleCollapse}
                   onAddItem={onAddItem}
                   onDeleteItem={onDeleteItem}

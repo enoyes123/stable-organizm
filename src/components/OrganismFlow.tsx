@@ -8,15 +8,19 @@ import { TodayWindow } from './TodayWindow';
 import { ThemeToggle } from './ThemeToggle';
 import { KeyLinksPanel } from './KeyLinksPanel';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, Eye, Calendar, Plus, ArrowLeft, Briefcase, User, Maximize, Minimize, Users } from 'lucide-react';
+import { RotateCcw, Eye, Calendar, Plus, ArrowLeft, Briefcase, User, Maximize, Minimize, Users, Palette } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ColorPickerModal } from './ColorPickerModal';
+import { useWorkspaceColors } from '@/hooks/useWorkspaceColors';
 
 export const OrganismFlow: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isFullscreen, setIsFullscreen] = React.useState(false);
   const [showKeyLinks, setShowKeyLinks] = React.useState(false);
+  const [showColorPicker, setShowColorPicker] = React.useState(false);
   const keyLinksPanelRef = useRef<HTMLDivElement>(null);
+  const { getColorsForWorkspace, setColorsForWorkspace } = useWorkspaceColors();
 
   // Check if user is criley5 - they only see Generator tab
   const isGeneratorOnlyUser = user?.email === 'criley5@babson.edu';
@@ -425,8 +429,13 @@ export const OrganismFlow: React.FC = () => {
     );
   };
 
+  const customColors = getColorsForWorkspace(state.workspace);
+
   return (
-    <div className="min-h-screen bg-background">
+    <div
+      className="min-h-screen bg-background"
+      style={customColors ? { backgroundColor: customColors.background } : undefined}
+    >
       {/* Header Controls */}
       <div className="flex justify-between items-center px-6 py-4 bg-card border-b border-border">
         <div className="flex items-center gap-6">
@@ -497,6 +506,17 @@ export const OrganismFlow: React.FC = () => {
             >
               <Plus size={16} />
               Add Goal
+            </button>
+          )}
+
+          {/* Colors button - only for Generator and Elizabeth workspaces */}
+          {(state.workspace === 'generator' || state.workspace === 'elizabeth') && (
+            <button
+              onClick={() => setShowColorPicker(true)}
+              className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-xl text-sm font-medium transition-all duration-200 ease-ios active:scale-95 shadow-ios hover:shadow-ios-lg flex items-center gap-2"
+            >
+              <Palette size={16} />
+              Colors
             </button>
           )}
 
@@ -607,6 +627,7 @@ export const OrganismFlow: React.FC = () => {
                                     item={item}
                                     level={0}
                                     workspace={state.workspace}
+                                    customColors={customColors}
                                     onToggleCollapse={toggleCollapse}
                                     onAddItem={addItem}
                                     onDeleteItem={deleteItem}
@@ -666,7 +687,20 @@ export const OrganismFlow: React.FC = () => {
           />
         )}
       </div>
+
+      {/* Color Picker Modal */}
+      {showColorPicker && (state.workspace === 'generator' || state.workspace === 'elizabeth') && (
+        <ColorPickerModal
+          isOpen={showColorPicker}
+          onClose={() => setShowColorPicker(false)}
+          workspace={state.workspace as 'generator' | 'elizabeth'}
+          currentColors={customColors!}
+          onSave={(colors) => {
+            setColorsForWorkspace(state.workspace as 'generator' | 'elizabeth', colors);
+            setShowColorPicker(false);
+          }}
+        />
+      )}
     </div>
   );
 };
-// Force rebuild - Elizabeth button added

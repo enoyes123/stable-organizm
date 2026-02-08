@@ -34,3 +34,17 @@ export interface TodayItem {
   priority: number;
   workspace?: WorkspaceType;
 }
+
+export interface WorkspaceColors {
+  background: string;
+  goalNode: string;
+  subgoalNode: string;
+  taskNode: string;
+}
+
+export const DEFAULT_WORKSPACE_COLORS: WorkspaceColors = {
+  background: '#1C1C1E',
+  goalNode: '#323236',
+  subgoalNode: '#2a2a2e',
+  taskNode: '#1f2937'
+};
