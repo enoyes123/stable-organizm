@@ -347,25 +347,30 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                   {item.icon}
                 </span>
                 {showIconPicker && (
-                  <div
-                    ref={iconPickerRef}
-                    className="icon-picker absolute top-full left-0 mt-2 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 grid grid-cols-6 gap-2 w-[280px]"
-                  >
-                    {GOAL_ICONS.map((icon) => (
-                      <button
-                        key={icon}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelectIcon(icon);
-                        }}
-                        className={`w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-110 transition-all text-2xl ${
-                          item.icon === icon ? 'bg-blue-100 dark:bg-blue-900 ring-2 ring-blue-500' : ''
-                        }`}
-                      >
-                        {icon}
-                      </button>
-                    ))}
-                  </div>
+                  <>
+                    {/* Backdrop overlay */}
+                    <div className="fixed inset-0 bg-black/20 z-[9998]" onClick={() => setShowIconPicker(false)} />
+                    {/* Icon picker */}
+                    <div
+                      ref={iconPickerRef}
+                      className="icon-picker fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-5 bg-white dark:bg-gray-800 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] border-2 border-gray-300 dark:border-gray-600 z-[9999] grid grid-cols-8 gap-2 w-[380px] max-h-[70vh] overflow-y-auto"
+                    >
+                      {GOAL_ICONS.map((icon) => (
+                        <button
+                          key={icon}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectIcon(icon);
+                          }}
+                          className={`w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-125 transition-all text-2xl ${
+                            item.icon === icon ? 'bg-blue-100 dark:bg-blue-900 ring-2 ring-blue-500' : ''
+                          }`}
+                        >
+                          {icon}
+                        </button>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
             )}
