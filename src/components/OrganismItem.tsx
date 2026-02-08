@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { TaskItem } from '@/types/organism';
-import { Plus, Trash2, Minus, GripVertical } from 'lucide-react';
+import { Plus, Trash2, Minus, GripVertical, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
@@ -76,16 +76,19 @@ const ConnectorLines: React.FC<{ parentRef: React.RefObject<HTMLElement>; childr
   );
 };
 
+import { WorkspaceType } from '@/types/organism';
+
 interface OrganismItemProps {
   item: TaskItem;
   level: number;
-  workspace?: 'work' | 'personal';
+  workspace?: WorkspaceType;
   onToggleCollapse: (id: string) => void;
   onAddItem: (parentId: string, type: 'subgoal' | 'task') => void;
   onDeleteItem: (id: string) => void;
   onUpdateText: (id: string, text: string) => void;
   onKeyDown: (e: React.KeyboardEvent, id: string) => void;
   onReorderChildren?: (parentId: string, oldIndex: number, newIndex: number) => void;
+  onCopyItem?: (item: TaskItem, targetWorkspace: WorkspaceType) => void;
 }
 
 export const OrganismItem: React.FC<OrganismItemProps> = ({
@@ -97,7 +100,8 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
   onDeleteItem,
   onUpdateText,
   onKeyDown,
-  onReorderChildren
+  onReorderChildren,
+  onCopyItem
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(item.text);
@@ -354,6 +358,20 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                     <Plus size={14} />
                   </button>
                 )}
+                {/* Copy button - only show for work and generator workspaces */}
+                {onCopyItem && (workspace === 'work' || workspace === 'generator') && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const targetWorkspace = workspace === 'work' ? 'generator' : 'work';
+                      onCopyItem(item, targetWorkspace);
+                    }}
+                    className="p-1.5 bg-green-500 hover:bg-green-600 rounded-full text-white shadow-ios transition-all duration-200 active:scale-95"
+                    title={`Copy to ${workspace === 'work' ? 'Generator' : 'Work'}`}
+                  >
+                    <Copy size={12} />
+                  </button>
+                )}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -436,6 +454,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                                 onUpdateText={onUpdateText}
                                 onKeyDown={onKeyDown}
                                 onReorderChildren={onReorderChildren}
+                                onCopyItem={onCopyItem}
                               />
                             </div>
                           )}
@@ -459,6 +478,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                   onUpdateText={onUpdateText}
                   onKeyDown={onKeyDown}
                   onReorderChildren={onReorderChildren}
+                  onCopyItem={onCopyItem}
                 />
               ))
             )}

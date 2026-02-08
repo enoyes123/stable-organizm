@@ -39,7 +39,8 @@ export const OrganismFlow: React.FC = () => {
     reorderGoals,
     reorderChildren,
     switchWorkspace,
-    getCurrentHistory
+    getCurrentHistory,
+    copyItemToWorkspace
   } = useOrganism();
 
   React.useEffect(() => {
@@ -571,6 +572,7 @@ export const OrganismFlow: React.FC = () => {
                                     onUpdateText={updateItemText}
                                     onKeyDown={handleKeyDown}
                                     onReorderChildren={reorderChildren}
+                                    onCopyItem={copyItemToWorkspace}
                                   />
                                 </div>
                               )}

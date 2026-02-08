@@ -389,6 +389,53 @@ export const useOrganism = () => {
     });
   }, [saveToHistory, saveToDatabase]);
 
+  // Copy an item (with all children) to another workspace
+  const copyItemToWorkspace = useCallback((item: TaskItem, targetWorkspace: WorkspaceType) => {
+    // Deep clone the item with new IDs
+    const cloneWithNewIds = (item: TaskItem, newParentId?: string): TaskItem => {
+      const newId = Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
+      return {
+        ...item,
+        id: newId,
+        parentId: newParentId,
+        children: item.children.map(child => cloneWithNewIds(child, newId))
+      };
+    };
+
+    const clonedItem = cloneWithNewIds(item);
+
+    // If it's not a goal, we need to convert it to a goal for the top level
+    // Or keep it as-is if it's a subgoal/task being added
+    let itemToAdd: TaskItem;
+    if (item.type === 'goal') {
+      itemToAdd = clonedItem;
+    } else if (item.type === 'subgoal') {
+      // Convert subgoal to goal when copying to top level
+      itemToAdd = { ...clonedItem, type: 'goal', parentId: undefined };
+    } else {
+      // Task becomes a goal with no children when copied to top level
+      itemToAdd = { ...clonedItem, type: 'goal', parentId: undefined, children: [] };
+    }
+
+    setState(prev => {
+      let newItems: TaskItem[];
+
+      if (targetWorkspace === 'work') {
+        newItems = [...prev.items, itemToAdd];
+        saveToDatabase(newItems, 'work');
+        return { ...prev, items: newItems };
+      } else if (targetWorkspace === 'personal') {
+        newItems = [...prev.personalItems, itemToAdd];
+        saveToDatabase(newItems, 'personal');
+        return { ...prev, personalItems: newItems };
+      } else {
+        newItems = [...prev.generatorItems, itemToAdd];
+        saveToDatabase(newItems, 'generator');
+        return { ...prev, generatorItems: newItems };
+      }
+    });
+  }, [saveToDatabase]);
+
   return {
     state: {
       ...state,
@@ -410,7 +457,8 @@ export const useOrganism = () => {
     reorderGoals,
     reorderChildren,
     switchWorkspace,
-    getCurrentHistory
+    getCurrentHistory,
+    copyItemToWorkspace
   };
 };
 
