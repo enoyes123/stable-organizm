@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { TaskItem } from '@/types/organism';
-import { Plus, Trash2, Minus, GripVertical, Copy, Strikethrough, X } from 'lucide-react';
+import { Plus, Trash2, Minus, GripVertical, Copy, Strikethrough, X, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
-import { GOAL_ICONS } from '@/constants/icons';
+import { GOAL_ICONS, searchIcons } from '@/constants/icons';
 
 // Global state to track which icon picker is open (only one at a time)
 let globalCloseIconPicker: (() => void) | null = null;
@@ -118,12 +118,14 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
   const [fontSize, setFontSize] = useState(16);
   const [editFontSize, setEditFontSize] = useState(18);
   const [showIconPicker, setShowIconPicker] = useState(false);
+  const [iconSearchQuery, setIconSearchQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const collapseButtonRef = useRef<HTMLButtonElement>(null);
   const childrenContainerRef = useRef<HTMLDivElement>(null);
   const iconPickerRef = useRef<HTMLDivElement>(null);
+  const iconSearchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -175,7 +177,19 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
       onUpdateIcon(item.id, icon);
     }
     setShowIconPicker(false);
+    setIconSearchQuery('');
   };
+
+  // Focus search input and reset query when picker opens
+  useEffect(() => {
+    if (showIconPicker) {
+      setIconSearchQuery('');
+      // Small delay to ensure the portal is rendered
+      setTimeout(() => {
+        iconSearchInputRef.current?.focus();
+      }, 50);
+    }
+  }, [showIconPicker]);
 
   useEffect(() => {
     if (!isEditing && textRef.current && containerRef.current) {
@@ -410,45 +424,69 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                       className="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border-2 border-gray-300 dark:border-gray-600"
                     >
                       {/* Header with close button */}
-                      <div className="flex justify-between items-center mb-4">
+                      <div className="flex justify-between items-center mb-3">
                         <span className="text-lg font-semibold text-gray-700 dark:text-gray-200">Choose Icon</span>
                         <button
-                          onClick={() => setShowIconPicker(false)}
+                          onClick={() => { setShowIconPicker(false); setIconSearchQuery(''); }}
                           className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                         >
                           <X size={20} className="text-gray-500" />
                         </button>
                       </div>
+                      {/* Search input */}
+                      <div className="relative mb-4">
+                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                          ref={iconSearchInputRef}
+                          type="text"
+                          value={iconSearchQuery}
+                          onChange={(e) => setIconSearchQuery(e.target.value)}
+                          placeholder="Search icons... (e.g. rocket, star, money)"
+                          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
                       {/* Icon grid */}
-                      <div className="grid grid-cols-10 gap-2 w-[440px] max-h-[60vh] overflow-y-auto p-1">
-                        {/* No icon option */}
-                        <button
-                          key="no-icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSelectIcon('');
-                          }}
-                          className={`w-10 h-10 flex items-center justify-center rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 hover:scale-125 transition-all text-lg text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 ${
-                            !item.icon ? 'bg-red-100 dark:bg-red-900/30 ring-2 ring-red-400' : ''
-                          }`}
-                          title="No icon"
-                        >
-                          ✕
-                        </button>
-                        {GOAL_ICONS.map((icon, index) => (
+                      <div className="grid grid-cols-10 gap-2 w-[440px] max-h-[50vh] overflow-y-auto p-1">
+                        {/* No icon option - only show when not searching */}
+                        {!iconSearchQuery && (
                           <button
-                            key={`${icon}-${index}`}
+                            key="no-icon"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleSelectIcon(icon);
+                              handleSelectIcon('');
                             }}
-                            className={`w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-125 transition-all text-2xl ${
-                              item.icon === icon ? 'bg-blue-100 dark:bg-blue-900 ring-2 ring-blue-500' : ''
+                            className={`w-10 h-10 flex items-center justify-center rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 hover:scale-125 transition-all text-lg text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 ${
+                              !item.icon ? 'bg-red-100 dark:bg-red-900/30 ring-2 ring-red-400' : ''
                             }`}
+                            title="No icon"
                           >
-                            {icon}
+                            ✕
                           </button>
-                        ))}
+                        )}
+                        {(() => {
+                          const filteredIcons = searchIcons(iconSearchQuery);
+                          if (filteredIcons.length === 0) {
+                            return (
+                              <div className="col-span-10 py-8 text-center text-gray-400">
+                                No icons found for "{iconSearchQuery}"
+                              </div>
+                            );
+                          }
+                          return filteredIcons.map((icon, index) => (
+                            <button
+                              key={`${icon}-${index}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSelectIcon(icon);
+                              }}
+                              className={`w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-125 transition-all text-2xl ${
+                                item.icon === icon ? 'bg-blue-100 dark:bg-blue-900 ring-2 ring-blue-500' : ''
+                              }`}
+                            >
+                              {icon}
+                            </button>
+                          ));
+                        })()}
                       </div>
                     </div>
                   </div>,
