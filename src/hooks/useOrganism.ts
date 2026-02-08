@@ -258,7 +258,8 @@ export const useOrganism = () => {
       type,
       isCollapsed: false,
       parentId,
-      children: []
+      children: [],
+      icon: type === 'subgoal' ? getRandomIcon() : undefined
     };
 
     setState(prev => {

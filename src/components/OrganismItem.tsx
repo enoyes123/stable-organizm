@@ -335,8 +335,8 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
             onClick={handleNodeClick}
             tabIndex={0}
           >
-            {/* Icon for goals - clickable to change */}
-            {item.type === 'goal' && item.icon && onUpdateIcon && (
+            {/* Icon for goals and subgoals - clickable to change */}
+            {(item.type === 'goal' || item.type === 'subgoal') && item.icon && onUpdateIcon && (
               <div className="relative goal-icon">
                 <span
                   onClick={handleIconClick}

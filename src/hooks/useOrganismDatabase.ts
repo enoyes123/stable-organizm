@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { TaskItem, WorkspaceType } from '@/types/organism';
+import { getRandomIcon } from '@/constants/icons';
 
 // Define a simple interface for database items to avoid type complexity
 interface DatabaseItem {
@@ -261,13 +262,16 @@ export const useOrganismDatabase = () => {
 
     // First pass: create all items
     flatData.forEach(item => {
+      // Assign random icons to goals/subgoals that don't have one
+      const needsIcon = (item.type === 'goal' || item.type === 'subgoal') && !item.icon;
+
       itemMap.set(item.id, {
         id: item.id,
         text: item.text,
         type: item.type as 'goal' | 'subgoal' | 'task',
         isCollapsed: item.is_collapsed,
         isStrikethrough: item.is_strikethrough || false,
-        icon: item.icon || undefined,
+        icon: needsIcon ? getRandomIcon() : (item.icon || undefined),
         children: [],
         parentId: item.parent_id || undefined
       });
