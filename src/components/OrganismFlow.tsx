@@ -513,7 +513,7 @@ export const OrganismFlow: React.FC = () => {
           {(state.workspace === 'generator' || state.workspace === 'elizabeth') && (
             <button
               onClick={() => setShowColorPicker(true)}
-              className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-xl text-sm font-medium transition-all duration-200 ease-ios active:scale-95 shadow-ios hover:shadow-ios-lg flex items-center gap-2"
+              className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-foreground rounded-xl text-sm transition-all duration-200 ease-ios active:scale-95 flex items-center gap-2"
             >
               <Palette size={16} />
               Colors
