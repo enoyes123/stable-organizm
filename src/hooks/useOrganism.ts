@@ -391,17 +391,26 @@ export const useOrganism = () => {
 
   // Copy an item (with all children) to another workspace
   const copyItemToWorkspace = useCallback((item: TaskItem, targetWorkspace: WorkspaceType) => {
-    // Deep clone the item with new IDs and ensure all items are expanded
-    const cloneWithNewIds = (item: TaskItem, newParentId?: string): TaskItem => {
+    // Deep clone the item with new IDs
+    const cloneWithNewIds = (itemToClone: TaskItem, newParentId?: string): TaskItem => {
       const newId = Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
+      const clonedChildren = itemToClone.children.map(child => cloneWithNewIds(child, newId));
       return {
-        ...item,
         id: newId,
+        text: itemToClone.text,
+        type: itemToClone.type,
+        isCollapsed: false, // Force expanded
         parentId: newParentId,
-        isCollapsed: false, // Ensure copied items are visible/expanded
-        children: item.children.map(child => cloneWithNewIds(child, newId))
+        children: clonedChildren
       };
     };
+
+    // Helper to ensure entire tree is expanded
+    const expandTree = (itemToExpand: TaskItem): TaskItem => ({
+      ...itemToExpand,
+      isCollapsed: false,
+      children: itemToExpand.children.map(expandTree)
+    });
 
     const clonedItem = cloneWithNewIds(item);
 
@@ -410,22 +419,24 @@ export const useOrganism = () => {
 
     if (item.type === 'goal') {
       // Goal stays as goal with all children
-      itemToAdd = { ...clonedItem, parentId: undefined };
+      itemToAdd = expandTree({ ...clonedItem, parentId: undefined });
     } else if (item.type === 'subgoal') {
       // Create a container goal for the subgoal
       const goalId = Date.now().toString() + '-goal-' + Math.random().toString(36).substr(2, 9);
+      const expandedClone = expandTree({ ...clonedItem, parentId: goalId });
       itemToAdd = {
         id: goalId,
         text: '[Copied]',
         type: 'goal',
         isCollapsed: false,
         parentId: undefined,
-        children: [{ ...clonedItem, parentId: goalId }]
+        children: [expandedClone]
       };
     } else {
       // Task: create container goal and subgoal
       const goalId = Date.now().toString() + '-goal-' + Math.random().toString(36).substr(2, 9);
       const subgoalId = Date.now().toString() + '-subgoal-' + Math.random().toString(36).substr(2, 9);
+      const expandedClone = expandTree({ ...clonedItem, parentId: subgoalId, children: [] });
       itemToAdd = {
         id: goalId,
         text: '[Copied]',
@@ -438,7 +449,7 @@ export const useOrganism = () => {
           type: 'subgoal',
           isCollapsed: false,
           parentId: goalId,
-          children: [{ ...clonedItem, parentId: subgoalId, children: [] }]
+          children: [expandedClone]
         }]
       };
     }
