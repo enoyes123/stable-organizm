@@ -313,6 +313,24 @@ export const useOrganism = () => {
     });
   }, [saveToDatabase]);
 
+  const toggleStrikethrough = useCallback((id: string) => {
+    setState(prev => {
+      const currentItems = prev.workspace === 'work' ? prev.items : prev.workspace === 'personal' ? prev.personalItems : prev.workspace === 'generator' ? prev.generatorItems : prev.elizabethItems;
+      const newItems = toggleItemStrikethrough(currentItems, id);
+      saveToDatabase(newItems, prev.workspace);
+
+      if (prev.workspace === 'work') {
+        return { ...prev, items: newItems };
+      } else if (prev.workspace === 'personal') {
+        return { ...prev, personalItems: newItems };
+      } else if (prev.workspace === 'generator') {
+        return { ...prev, generatorItems: newItems };
+      } else {
+        return { ...prev, elizabethItems: newItems };
+      }
+    });
+  }, [saveToDatabase]);
+
   const showAll = useCallback(() => {
     saveToHistory();
     setState(prev => {
@@ -566,6 +584,7 @@ export const useOrganism = () => {
     addItem,
     deleteItem,
     updateItemText,
+    toggleStrikethrough,
     showAll,
     undo,
     switchToTodayView,
@@ -612,6 +631,15 @@ const updateItemInTree = (items: TaskItem[], targetId: string, text: string): Ta
       return { ...item, text };
     }
     return { ...item, children: updateItemInTree(item.children, targetId, text) };
+  });
+};
+
+const toggleItemStrikethrough = (items: TaskItem[], targetId: string): TaskItem[] => {
+  return items.map(item => {
+    if (item.id === targetId) {
+      return { ...item, isStrikethrough: !item.isStrikethrough };
+    }
+    return { ...item, children: toggleItemStrikethrough(item.children, targetId) };
   });
 };
 

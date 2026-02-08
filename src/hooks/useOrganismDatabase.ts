@@ -10,6 +10,7 @@ interface DatabaseItem {
   type: string;
   parent_id: string | null;
   is_collapsed: boolean;
+  is_strikethrough?: boolean;
   sort_order: number;
   workspace: string;
   user_id: string;
@@ -264,6 +265,7 @@ export const useOrganismDatabase = () => {
         text: item.text,
         type: item.type as 'goal' | 'subgoal' | 'task',
         isCollapsed: item.is_collapsed,
+        isStrikethrough: item.is_strikethrough || false,
         children: [],
         parentId: item.parent_id || undefined
       });
@@ -298,6 +300,7 @@ export const useOrganismDatabase = () => {
           type: item.type,
           parent_id: parentId || null,
           is_collapsed: item.isCollapsed,
+          is_strikethrough: item.isStrikethrough || false,
           sort_order: currentSortOrder++,
           workspace: workspace,
           user_id: userId

@@ -33,6 +33,7 @@ export const OrganismFlow: React.FC = () => {
     addItem,
     deleteItem,
     updateItemText,
+    toggleStrikethrough,
     showAll,
     undo,
     switchToTodayView,
@@ -612,6 +613,7 @@ export const OrganismFlow: React.FC = () => {
                                     onKeyDown={handleKeyDown}
                                     onReorderChildren={reorderChildren}
                                     onCopyItem={copyItemToWorkspace}
+                                    onToggleStrikethrough={toggleStrikethrough}
                                   />
                                 </div>
                               )}

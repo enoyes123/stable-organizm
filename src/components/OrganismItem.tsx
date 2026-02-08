@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { TaskItem } from '@/types/organism';
-import { Plus, Trash2, Minus, GripVertical, Copy } from 'lucide-react';
+import { Plus, Trash2, Minus, GripVertical, Copy, Strikethrough } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
@@ -89,6 +89,7 @@ interface OrganismItemProps {
   onKeyDown: (e: React.KeyboardEvent, id: string) => void;
   onReorderChildren?: (parentId: string, oldIndex: number, newIndex: number) => void;
   onCopyItem?: (item: TaskItem, targetWorkspace: WorkspaceType) => void;
+  onToggleStrikethrough?: (id: string) => void;
 }
 
 export const OrganismItem: React.FC<OrganismItemProps> = ({
@@ -101,7 +102,8 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
   onUpdateText,
   onKeyDown,
   onReorderChildren,
-  onCopyItem
+  onCopyItem,
+  onToggleStrikethrough
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(item.text);
@@ -321,7 +323,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
             ) : (
               <span
                 ref={textRef}
-                className="edit-text cursor-text leading-tight text-left"
+                className={`edit-text cursor-text leading-tight text-left ${item.isStrikethrough ? 'line-through opacity-60' : ''}`}
                 style={{
                   fontSize: `${fontSize}px`,
                   whiteSpace: 'nowrap',
@@ -370,6 +372,23 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                     title={`Copy to ${workspace === 'work' ? 'Generator' : 'Work'}`}
                   >
                     <Copy size={12} />
+                  </button>
+                )}
+                {/* Strikethrough button - only show for elizabeth workspace */}
+                {workspace === 'elizabeth' && onToggleStrikethrough && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleStrikethrough(item.id);
+                    }}
+                    className={`p-1.5 rounded-full text-white shadow-ios transition-all duration-200 active:scale-95 ${
+                      item.isStrikethrough
+                        ? 'bg-orange-600 hover:bg-orange-700'
+                        : 'bg-orange-400 hover:bg-orange-500'
+                    }`}
+                    title={item.isStrikethrough ? 'Remove strikethrough' : 'Add strikethrough'}
+                  >
+                    <Strikethrough size={12} />
                   </button>
                 )}
                 <button
@@ -455,6 +474,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                                 onKeyDown={onKeyDown}
                                 onReorderChildren={onReorderChildren}
                                 onCopyItem={onCopyItem}
+                                onToggleStrikethrough={onToggleStrikethrough}
                               />
                             </div>
                           )}
@@ -479,6 +499,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                   onKeyDown={onKeyDown}
                   onReorderChildren={onReorderChildren}
                   onCopyItem={onCopyItem}
+                  onToggleStrikethrough={onToggleStrikethrough}
                 />
               ))
             )}
