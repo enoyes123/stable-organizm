@@ -1,31 +1,53 @@
-// Curated set of minimal, modern icons for goals
-// Selected for clean, simple aesthetic similar to Noun Project style
+// Colorful, visually interesting icons for goals
 
 export const GOAL_ICONS = [
-  '◎',  // Target/focus
-  '◇',  // Diamond
-  '△',  // Triangle
-  '○',  // Circle
-  '□',  // Square
-  '⬡',  // Hexagon
-  '✦',  // Star
-  '→',  // Arrow
-  '↗',  // Diagonal arrow
-  '⊕',  // Circle plus
-  '◉',  // Bullseye
-  '⬢',  // Filled hexagon
-  '▲',  // Filled triangle
-  '●',  // Filled circle
-  '■',  // Filled square
-  '⧫',  // Diamond filled
-  '✧',  // Star outline
-  '⊙',  // Circle dot
-  '⊗',  // Circle x
-  '⊖',  // Circle minus
-  '⊘',  // Circle slash
-  '⌘',  // Command
-  '⌬',  // Benzene ring
-  '⏣',  // Hexagon horizontal
+  // Nature & Growth
+  '🌱',  // Seedling - new beginnings
+  '🌿',  // Herb - growth
+  '🌸',  // Cherry blossom
+  '🌻',  // Sunflower
+  '🍀',  // Four leaf clover
+  '🌈',  // Rainbow
+
+  // Achievement & Success
+  '🎯',  // Target
+  '🏆',  // Trophy
+  '⭐',  // Star
+  '🌟',  // Glowing star
+  '💎',  // Gem
+  '🔥',  // Fire
+
+  // Energy & Action
+  '⚡',  // Lightning
+  '🚀',  // Rocket
+  '💪',  // Flexed biceps
+  '✨',  // Sparkles
+  '🎨',  // Artist palette
+  '🎵',  // Music note
+
+  // Mind & Focus
+  '🧠',  // Brain
+  '💡',  // Light bulb
+  '🎓',  // Graduation cap
+  '📚',  // Books
+  '🔬',  // Microscope
+  '🧩',  // Puzzle piece
+
+  // Heart & Wellness
+  '❤️',  // Red heart
+  '💜',  // Purple heart
+  '💙',  // Blue heart
+  '💚',  // Green heart
+  '🧘',  // Meditation
+  '🌅',  // Sunrise
+
+  // Objects & Tools
+  '🔑',  // Key
+  '🧭',  // Compass
+  '⚙️',  // Gear
+  '🛠️',  // Tools
+  '📌',  // Pin
+  '🎪',  // Circus tent
 ];
 
 // Get a random icon from the set

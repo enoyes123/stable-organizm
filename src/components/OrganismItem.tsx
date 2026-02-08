@@ -349,7 +349,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                 {showIconPicker && (
                   <div
                     ref={iconPickerRef}
-                    className="icon-picker absolute top-full left-0 mt-2 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 grid grid-cols-6 gap-2 w-[200px]"
+                    className="icon-picker absolute top-full left-0 mt-2 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 grid grid-cols-6 gap-2 w-[280px]"
                   >
                     {GOAL_ICONS.map((icon) => (
                       <button
@@ -358,8 +358,8 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                           e.stopPropagation();
                           handleSelectIcon(icon);
                         }}
-                        className={`w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-lg ${
-                          item.icon === icon ? 'bg-blue-100 dark:bg-blue-900' : ''
+                        className={`w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-110 transition-all text-2xl ${
+                          item.icon === icon ? 'bg-blue-100 dark:bg-blue-900 ring-2 ring-blue-500' : ''
                         }`}
                       >
                         {icon}
