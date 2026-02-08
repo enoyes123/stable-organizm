@@ -7,7 +7,31 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { WorkspaceColors, DEFAULT_WORKSPACE_COLORS } from '@/types/organism';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, ChevronDown } from 'lucide-react';
+
+// Curated palette of ~40 muted colors
+const MUTED_COLORS = [
+  // Grays & Neutrals
+  '#1C1C1E', '#2C2C2E', '#3A3A3C', '#48484A', '#636366', '#8E8E93',
+  // Warm Grays
+  '#2D2926', '#3C3633', '#4A4340', '#5C5552', '#716A66',
+  // Cool Grays
+  '#1E2428', '#2A3238', '#384048', '#4A545C', '#5E6A72',
+  // Muted Blues
+  '#1E3A5F', '#2C4A6E', '#3D5A7C', '#4E6A8A', '#5F7A98',
+  // Muted Teals
+  '#1E4A4A', '#2C5858', '#3A6666', '#4A7474', '#5A8282',
+  // Muted Greens
+  '#2D4A3A', '#3C5A4A', '#4A6A5A', '#5A7A6A', '#6A8A7A',
+  // Muted Purples
+  '#3A2D4A', '#4A3C5A', '#5A4A6A', '#6A5A7A', '#7A6A8A',
+  // Muted Magentas
+  '#4A2D3A', '#5A3C4A', '#6A4A5A', '#7A5A6A', '#8A6A7A',
+  // Muted Reds/Browns
+  '#4A2D2D', '#5A3C3C', '#6A4A4A', '#7A5A5A', '#8A6A6A',
+  // Muted Oranges/Tans
+  '#4A3A2D', '#5A4A3C', '#6A5A4A', '#7A6A5A', '#8A7A6A',
+];
 
 interface ColorPickerModalProps {
   isOpen: boolean;
@@ -25,38 +49,68 @@ interface ColorPickerRowProps {
 }
 
 const ColorPickerRow: React.FC<ColorPickerRowProps> = ({ label, color, onChange, previewType }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <div className="flex items-center justify-between py-3 border-b border-border last:border-b-0">
-      <div className="flex items-center gap-4">
-        <label className="text-sm font-medium text-foreground w-32">{label}</label>
-        <div className="flex items-center gap-3">
-          <input
-            type="color"
-            value={color}
-            onChange={(e) => onChange(e.target.value)}
-            className="w-10 h-10 rounded-lg cursor-pointer border-2 border-border hover:border-primary transition-colors"
-            style={{ padding: 0 }}
-          />
-          <span className="text-xs font-mono text-muted-foreground uppercase w-20">{color}</span>
+    <div className="py-3 border-b border-border last:border-b-0">
+      <div className="flex items-center justify-between">
+        <label className="text-sm font-medium text-foreground">{label}</label>
+
+        {/* Preview */}
+        <div className="flex items-center gap-2">
+          {previewType === 'background' ? (
+            <div
+              className="w-16 h-8 rounded-lg border border-border"
+              style={{ backgroundColor: color }}
+            />
+          ) : (
+            <div
+              className="px-3 py-1 rounded-xl text-white text-xs font-medium shadow-sm"
+              style={{ backgroundColor: color }}
+            >
+              {previewType === 'goal' ? 'Goal' : previewType === 'subgoal' ? 'Sub-goal' : 'Task'}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Preview */}
-      <div className="flex items-center gap-2">
-        {previewType === 'background' ? (
-          <div
-            className="w-16 h-10 rounded-lg border border-border"
-            style={{ backgroundColor: color }}
-          />
-        ) : (
-          <div
-            className="px-3 py-1.5 rounded-xl text-white text-xs font-medium shadow-sm"
-            style={{ backgroundColor: color }}
-          >
-            {previewType === 'goal' ? 'Goal' : previewType === 'subgoal' ? 'Sub-goal' : 'Task'}
+      {/* Color Picker Toggle */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="mt-2 flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <div
+          className="w-5 h-5 rounded border border-border"
+          style={{ backgroundColor: color }}
+        />
+        <span className="font-mono uppercase">{color}</span>
+        <ChevronDown
+          size={14}
+          className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {/* Color Swatches Grid */}
+      {isOpen && (
+        <div className="mt-3 p-2 bg-secondary/50 rounded-lg">
+          <div className="grid grid-cols-10 gap-1">
+            {MUTED_COLORS.map((c) => (
+              <button
+                key={c}
+                onClick={() => {
+                  onChange(c);
+                  setIsOpen(false);
+                }}
+                className={`w-6 h-6 rounded border-2 transition-all hover:scale-110 ${
+                  color === c ? 'border-white ring-1 ring-white' : 'border-transparent hover:border-white/50'
+                }`}
+                style={{ backgroundColor: c }}
+                title={c}
+              />
+            ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -91,7 +145,7 @@ export const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
           <DialogTitle className="text-xl">Colors for {workspaceName}</DialogTitle>
         </DialogHeader>
 
-        <div className="py-4">
+        <div className="py-4 max-h-[60vh] overflow-y-auto">
           <ColorPickerRow
             label="Background"
             color={colors.background}
