@@ -391,13 +391,14 @@ export const useOrganism = () => {
 
   // Copy an item (with all children) to another workspace
   const copyItemToWorkspace = useCallback((item: TaskItem, targetWorkspace: WorkspaceType) => {
-    // Deep clone the item with new IDs
+    // Deep clone the item with new IDs and ensure all items are expanded
     const cloneWithNewIds = (item: TaskItem, newParentId?: string): TaskItem => {
       const newId = Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
       return {
         ...item,
         id: newId,
         parentId: newParentId,
+        isCollapsed: false, // Ensure copied items are visible/expanded
         children: item.children.map(child => cloneWithNewIds(child, newId))
       };
     };
