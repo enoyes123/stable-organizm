@@ -457,16 +457,29 @@ export const useOrganism = () => {
     setState(prev => {
       let newItems: TaskItem[];
 
+      // Helper to expand all items in the array (not just the new one)
+      const expandAll = (items: TaskItem[]): TaskItem[] => {
+        return items.map(i => ({
+          ...i,
+          isCollapsed: false,
+          children: expandAll(i.children)
+        }));
+      };
+
       if (targetWorkspace === 'work') {
-        newItems = [...prev.items, itemToAdd];
+        // Add the new item and ensure ALL items in target are expanded
+        const withNewItem = [...prev.items, itemToAdd];
+        newItems = expandAll(withNewItem);
         saveToDatabase(newItems, 'work');
         return { ...prev, items: newItems };
       } else if (targetWorkspace === 'personal') {
-        newItems = [...prev.personalItems, itemToAdd];
+        const withNewItem = [...prev.personalItems, itemToAdd];
+        newItems = expandAll(withNewItem);
         saveToDatabase(newItems, 'personal');
         return { ...prev, personalItems: newItems };
       } else {
-        newItems = [...prev.generatorItems, itemToAdd];
+        const withNewItem = [...prev.generatorItems, itemToAdd];
+        newItems = expandAll(withNewItem);
         saveToDatabase(newItems, 'generator');
         return { ...prev, generatorItems: newItems };
       }
