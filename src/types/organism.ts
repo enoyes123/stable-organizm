@@ -7,6 +7,7 @@ export interface TaskItem {
   isCollapsed: boolean;
   parentId?: string;
   isStrikethrough?: boolean;
+  icon?: string;
 }
 
 export type WorkspaceType = 'work' | 'personal' | 'generator' | 'elizabeth';

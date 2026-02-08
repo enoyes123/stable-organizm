@@ -3,6 +3,7 @@ import { TaskItem, OrganismState, TodayItem, WorkspaceType } from '@/types/organ
 import { useOrganismDatabase } from './useOrganismDatabase';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { getRandomIcon } from '@/constants/icons';
 
 export const useOrganism = () => {
   const { user } = useAuth();
@@ -227,7 +228,8 @@ export const useOrganism = () => {
       text: 'New Goal',
       type: 'goal',
       isCollapsed: false,
-      children: []
+      children: [],
+      icon: getRandomIcon()
     };
 
     setState(prev => {
@@ -317,6 +319,24 @@ export const useOrganism = () => {
     setState(prev => {
       const currentItems = prev.workspace === 'work' ? prev.items : prev.workspace === 'personal' ? prev.personalItems : prev.workspace === 'generator' ? prev.generatorItems : prev.elizabethItems;
       const newItems = toggleItemStrikethrough(currentItems, id);
+      saveToDatabase(newItems, prev.workspace);
+
+      if (prev.workspace === 'work') {
+        return { ...prev, items: newItems };
+      } else if (prev.workspace === 'personal') {
+        return { ...prev, personalItems: newItems };
+      } else if (prev.workspace === 'generator') {
+        return { ...prev, generatorItems: newItems };
+      } else {
+        return { ...prev, elizabethItems: newItems };
+      }
+    });
+  }, [saveToDatabase]);
+
+  const updateIcon = useCallback((id: string, icon: string) => {
+    setState(prev => {
+      const currentItems = prev.workspace === 'work' ? prev.items : prev.workspace === 'personal' ? prev.personalItems : prev.workspace === 'generator' ? prev.generatorItems : prev.elizabethItems;
+      const newItems = updateItemIcon(currentItems, id, icon);
       saveToDatabase(newItems, prev.workspace);
 
       if (prev.workspace === 'work') {
@@ -585,6 +605,7 @@ export const useOrganism = () => {
     deleteItem,
     updateItemText,
     toggleStrikethrough,
+    updateIcon,
     showAll,
     undo,
     switchToTodayView,
@@ -640,6 +661,15 @@ const toggleItemStrikethrough = (items: TaskItem[], targetId: string): TaskItem[
       return { ...item, isStrikethrough: !item.isStrikethrough };
     }
     return { ...item, children: toggleItemStrikethrough(item.children, targetId) };
+  });
+};
+
+const updateItemIcon = (items: TaskItem[], targetId: string, icon: string): TaskItem[] => {
+  return items.map(item => {
+    if (item.id === targetId) {
+      return { ...item, icon };
+    }
+    return { ...item, children: updateItemIcon(item.children, targetId, icon) };
   });
 };
 

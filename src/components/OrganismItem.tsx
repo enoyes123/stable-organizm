@@ -3,6 +3,7 @@ import { TaskItem } from '@/types/organism';
 import { Plus, Trash2, Minus, GripVertical, Copy, Strikethrough } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { GOAL_ICONS } from '@/constants/icons';
 
 // Connector lines component that draws curved bezier paths from parent to children
 const ConnectorLines: React.FC<{ parentRef: React.RefObject<HTMLElement>; childrenRef: React.RefObject<HTMLElement>; childCount: number }> = ({ parentRef, childrenRef, childCount }) => {
@@ -90,6 +91,7 @@ interface OrganismItemProps {
   onReorderChildren?: (parentId: string, oldIndex: number, newIndex: number) => void;
   onCopyItem?: (item: TaskItem, targetWorkspace: WorkspaceType) => void;
   onToggleStrikethrough?: (id: string) => void;
+  onUpdateIcon?: (id: string, icon: string) => void;
 }
 
 export const OrganismItem: React.FC<OrganismItemProps> = ({
@@ -103,18 +105,21 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
   onKeyDown,
   onReorderChildren,
   onCopyItem,
-  onToggleStrikethrough
+  onToggleStrikethrough,
+  onUpdateIcon
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(item.text);
   const [isHovered, setIsHovered] = useState(false);
   const [fontSize, setFontSize] = useState(16);
   const [editFontSize, setEditFontSize] = useState(18);
+  const [showIconPicker, setShowIconPicker] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const collapseButtonRef = useRef<HTMLButtonElement>(null);
   const childrenContainerRef = useRef<HTMLDivElement>(null);
+  const iconPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -122,6 +127,31 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
       setEditFontSize(18);
     }
   }, [isEditing]);
+
+  // Close icon picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (iconPickerRef.current && !iconPickerRef.current.contains(e.target as Node)) {
+        setShowIconPicker(false);
+      }
+    };
+    if (showIconPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showIconPicker]);
+
+  const handleIconClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowIconPicker(!showIconPicker);
+  };
+
+  const handleSelectIcon = (icon: string) => {
+    if (onUpdateIcon) {
+      onUpdateIcon(item.id, icon);
+    }
+    setShowIconPicker(false);
+  };
 
   useEffect(() => {
     if (!isEditing && textRef.current && containerRef.current) {
@@ -205,18 +235,18 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
   };
 
   const handleNodeClick = (e: React.MouseEvent) => {
-    // Don't collapse if clicking on hover buttons or their container
+    // Don't collapse if clicking on hover buttons, icon picker, or their container
     const target = e.target as HTMLElement;
-    if (target.closest('.hover-buttons') || isEditing) {
+    if (target.closest('.hover-buttons') || target.closest('.icon-picker') || target.closest('.goal-icon') || isEditing) {
       return;
     }
-    
+
     // If clicking on text, enter edit mode
     if (target.closest('.edit-text')) {
       setIsEditing(true);
       return;
     }
-    
+
     // Otherwise, toggle collapse
     onToggleCollapse(item.id);
   };
@@ -305,6 +335,41 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
             onClick={handleNodeClick}
             tabIndex={0}
           >
+            {/* Icon for goals - clickable to change */}
+            {item.type === 'goal' && item.icon && onUpdateIcon && (
+              <div className="relative goal-icon">
+                <span
+                  onClick={handleIconClick}
+                  className="mr-2 cursor-pointer hover:opacity-70 transition-opacity select-none"
+                  style={{ fontSize: `${fontSize + 2}px` }}
+                  title="Click to change icon"
+                >
+                  {item.icon}
+                </span>
+                {showIconPicker && (
+                  <div
+                    ref={iconPickerRef}
+                    className="icon-picker absolute top-full left-0 mt-2 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 grid grid-cols-6 gap-2 w-[200px]"
+                  >
+                    {GOAL_ICONS.map((icon) => (
+                      <button
+                        key={icon}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectIcon(icon);
+                        }}
+                        className={`w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-lg ${
+                          item.icon === icon ? 'bg-blue-100 dark:bg-blue-900' : ''
+                        }`}
+                      >
+                        {icon}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {isEditing ? (
               <input
                 ref={inputRef}
@@ -475,6 +540,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                                 onReorderChildren={onReorderChildren}
                                 onCopyItem={onCopyItem}
                                 onToggleStrikethrough={onToggleStrikethrough}
+                                onUpdateIcon={onUpdateIcon}
                               />
                             </div>
                           )}
@@ -500,6 +566,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                   onReorderChildren={onReorderChildren}
                   onCopyItem={onCopyItem}
                   onToggleStrikethrough={onToggleStrikethrough}
+                  onUpdateIcon={onUpdateIcon}
                 />
               ))
             )}
