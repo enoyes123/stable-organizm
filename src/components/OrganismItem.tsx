@@ -251,11 +251,19 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
   };
 
   const handleNodeMouseEnter = () => {
-    setIsHovered(true);
+    // Don't set hovered here - we'll do it in handleNodeMouseMove based on position
   };
 
   const handleNodeMouseLeave = () => {
     setIsHovered(false);
+  };
+
+  const handleNodeMouseMove = (e: React.MouseEvent) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const isInRightHalf = mouseX > rect.width / 2;
+    setIsHovered(isInRightHalf);
   };
 
   const handleNodeClick = (e: React.MouseEvent) => {
@@ -355,6 +363,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
             className={cn(getNodeStyles(), "w-full")}
             onMouseEnter={handleNodeMouseEnter}
             onMouseLeave={handleNodeMouseLeave}
+            onMouseMove={handleNodeMouseMove}
             onKeyDown={(e) => onKeyDown(e, item.id)}
             onClick={handleNodeClick}
             tabIndex={0}
@@ -477,7 +486,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
               </span>
             )}
 
-            {isHovered && (
+            {isHovered && !showIconPicker && (
               <div className="hover-buttons absolute -top-2 -right-2 flex gap-1.5 z-20">
                 {item.type === 'goal' && (
                   <button
