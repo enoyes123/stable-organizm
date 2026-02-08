@@ -415,7 +415,7 @@ export const useOrganism = () => {
       const goalId = Date.now().toString() + '-goal-' + Math.random().toString(36).substr(2, 9);
       itemToAdd = {
         id: goalId,
-        text: `Copied: ${item.text}`,
+        text: '[Copied]',
         type: 'goal',
         isCollapsed: false,
         parentId: undefined,
@@ -427,13 +427,13 @@ export const useOrganism = () => {
       const subgoalId = Date.now().toString() + '-subgoal-' + Math.random().toString(36).substr(2, 9);
       itemToAdd = {
         id: goalId,
-        text: `Copied: ${item.text}`,
+        text: '[Copied]',
         type: 'goal',
         isCollapsed: false,
         parentId: undefined,
         children: [{
           id: subgoalId,
-          text: 'Copied tasks',
+          text: '[Copied]',
           type: 'subgoal',
           isCollapsed: false,
           parentId: goalId,
