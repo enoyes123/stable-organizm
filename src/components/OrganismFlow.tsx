@@ -612,13 +612,12 @@ export const OrganismFlow: React.FC = () => {
           <KeyLinksPanel isVisible={true} workspace={state.workspace} />
         </div>
 
-        {/* Hover trigger zone for Links panel - visible strip on right edge */}
+        {/* Hover trigger zone for Links panel - invisible strip on right edge */}
         {!showKeyLinks && (
           <div
-            className="absolute top-0 right-0 w-8 h-full bg-gradient-to-l from-blue-500/20 to-transparent hover:from-blue-500/40 transition-all cursor-pointer z-10"
+            className="absolute top-0 right-0 w-8 h-full cursor-pointer z-10"
             onMouseEnter={() => setShowKeyLinks(true)}
             onClick={() => setShowKeyLinks(true)}
-            title="Click or hover to show Links"
           />
         )}
       </div>
