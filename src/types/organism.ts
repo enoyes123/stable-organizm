@@ -8,18 +8,20 @@ export interface TaskItem {
   parentId?: string;
 }
 
-export type WorkspaceType = 'work' | 'personal' | 'generator';
+export type WorkspaceType = 'work' | 'personal' | 'generator' | 'elizabeth';
 
 export interface OrganismState {
   items: TaskItem[];
   personalItems: TaskItem[];
   generatorItems: TaskItem[];
+  elizabethItems: TaskItem[];
   selectedId: string | null;
   viewMode: 'tree' | 'today';
   workspace: WorkspaceType;
   history: TaskItem[][];
   personalHistory: TaskItem[][];
   generatorHistory: TaskItem[][];
+  elizabethHistory: TaskItem[][];
 }
 
 export interface TodayItem {

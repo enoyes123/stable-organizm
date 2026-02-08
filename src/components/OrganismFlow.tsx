@@ -21,6 +21,9 @@ export const OrganismFlow: React.FC = () => {
   // Check if user is criley5 - they only see Generator tab
   const isGeneratorOnlyUser = user?.email === 'criley5@babson.edu';
 
+  // Check if user is Elizabeth - she only sees Elizabeth tab
+  const isElizabethOnlyUser = user?.email === 'baileyelizabetha@gmail.com';
+
   const {
     state,
     todayItems,
@@ -58,6 +61,13 @@ export const OrganismFlow: React.FC = () => {
       switchWorkspace('generator');
     }
   }, [isGeneratorOnlyUser, state.workspace, switchWorkspace]);
+
+  // Auto-switch to Elizabeth workspace for Elizabeth
+  useEffect(() => {
+    if (isElizabethOnlyUser && state.workspace !== 'elizabeth') {
+      switchWorkspace('elizabeth');
+    }
+  }, [isElizabethOnlyUser, state.workspace, switchWorkspace]);
 
 
   const toggleFullscreen = async () => {
@@ -424,7 +434,7 @@ export const OrganismFlow: React.FC = () => {
 
           {/* Workspace Toggle - iOS Segmented Control Style */}
           <div className="inline-flex rounded-xl bg-secondary p-1">
-            {!isGeneratorOnlyUser && (
+            {!isGeneratorOnlyUser && !isElizabethOnlyUser && (
               <>
                 <button
                   onClick={() => switchWorkspace('work')}
@@ -450,19 +460,34 @@ export const OrganismFlow: React.FC = () => {
                 </button>
               </>
             )}
-            <button
-              onClick={() => switchWorkspace('generator')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-ios ${
-                state.workspace === 'generator'
-                  ? 'bg-card text-foreground shadow-ios'
-                  : 'bg-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Users size={14} className="inline mr-1.5" />
-              Generator
-            </button>
+            {!isElizabethOnlyUser && (
+              <button
+                onClick={() => switchWorkspace('generator')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-ios ${
+                  state.workspace === 'generator'
+                    ? 'bg-card text-foreground shadow-ios'
+                    : 'bg-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Users size={14} className="inline mr-1.5" />
+                Generator
+              </button>
+            )}
+            {/* Elizabeth tab inside segmented control - only for Elizabeth herself */}
+            {isElizabethOnlyUser && (
+              <button
+                onClick={() => switchWorkspace('elizabeth')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-ios ${
+                  state.workspace === 'elizabeth'
+                    ? 'bg-card text-foreground shadow-ios'
+                    : 'bg-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Elizabeth
+              </button>
+            )}
           </div>
-          
+
           {state.viewMode === 'tree' && (
             <button
               onClick={addGoal}
@@ -470,6 +495,16 @@ export const OrganismFlow: React.FC = () => {
             >
               <Plus size={16} />
               Add Goal
+            </button>
+          )}
+
+          {/* Elizabeth button - visible for everyone except Elizabeth herself */}
+          {!isElizabethOnlyUser && (
+            <button
+              onClick={() => switchWorkspace('elizabeth')}
+              className="px-4 py-2 rounded-xl text-sm font-medium bg-pink-500 text-white hover:bg-pink-600"
+            >
+              Elizabeth
             </button>
           )}
         </div>
@@ -626,4 +661,4 @@ export const OrganismFlow: React.FC = () => {
     </div>
   );
 };
-// Trigger deploy
+// Force rebuild - Elizabeth button added

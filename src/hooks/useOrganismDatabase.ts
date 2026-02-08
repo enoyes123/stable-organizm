@@ -208,6 +208,51 @@ export const useOrganismDatabase = () => {
     }
   };
 
+  // Elizabeth workspace is SHARED between specific users
+  const loadElizabethItemsFromDatabase = async (userId: string): Promise<TaskItem[]> => {
+    try {
+      // Load ALL elizabeth items (shared workspace - no user_id filter)
+      const { data, error } = await supabase
+        .from('organism_items')
+        .select('*')
+        .eq('workspace', 'elizabeth')
+        .order('sort_order');
+
+      if (error) {
+        console.error('Error loading elizabeth items:', error);
+        return [];
+      }
+
+      return buildTreeFromFlatData(data || []);
+    } catch (error) {
+      console.error('Error loading elizabeth items:', error);
+      return [];
+    }
+  };
+
+  const saveElizabethItemsToDatabase = async (items: TaskItem[], userId: string) => {
+    try {
+      // Clear ALL existing elizabeth items (shared workspace)
+      await supabase.from('organism_items').delete()
+        .eq('workspace', 'elizabeth');
+
+      // Flatten the tree structure and save
+      const flatItems = flattenTreeForDatabase(items, 0, 'elizabeth', userId);
+
+      if (flatItems.length > 0) {
+        const { error } = await supabase
+          .from('organism_items')
+          .insert(flatItems);
+
+        if (error) {
+          console.error('Error saving elizabeth items:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Error saving elizabeth items:', error);
+    }
+  };
+
   const buildTreeFromFlatData = (flatData: DatabaseItem[]): TaskItem[] => {
     const itemMap = new Map<string, TaskItem>();
     const rootItems: TaskItem[] = [];
@@ -274,8 +319,10 @@ export const useOrganismDatabase = () => {
     loadItemsFromDatabase,
     loadPersonalItemsFromDatabase,
     loadGeneratorItemsFromDatabase,
+    loadElizabethItemsFromDatabase,
     saveItemsToDatabase,
     savePersonalItemsToDatabase,
-    saveGeneratorItemsToDatabase
+    saveGeneratorItemsToDatabase,
+    saveElizabethItemsToDatabase
   };
 };
