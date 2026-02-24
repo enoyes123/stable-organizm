@@ -22,7 +22,8 @@ const ConnectorLines: React.FC<{ parentRef: React.RefObject<HTMLElement>; childr
     const containerRect = childrenContainer.getBoundingClientRect();
 
     // SVG is positioned relative to the children container's parent
-    const svgWidth = 40; // width of the connector area
+    // Extended width to pass under the drag handles (handle is ~22px wide)
+    const svgWidth = 62; // width of the connector area (40 + 22 for handle)
     const svgHeight = containerRect.height;
     setSvgSize({ width: svgWidth, height: svgHeight });
 
@@ -38,11 +39,11 @@ const ConnectorLines: React.FC<{ parentRef: React.RefObject<HTMLElement>; childr
       const childRect = childElements[i].getBoundingClientRect();
       const endY = childRect.top + childRect.height / 2 - containerRect.top;
 
-      // Bezier curve from left to right
+      // Bezier curve from left to right, extending past the handle to connect to node
       const startX = 0;
       const endX = svgWidth;
-      const controlX1 = svgWidth * 0.6;
-      const controlX2 = svgWidth * 0.4;
+      const controlX1 = 24; // control point for smooth curve
+      const controlX2 = 38;
 
       newPaths.push(`M ${startX} ${startY} C ${controlX1} ${startY}, ${controlX2} ${endY}, ${endX} ${endY}`);
     }
@@ -259,7 +260,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
 
   const getBaseFontSize = (type: string) => {
     switch (type) {
-      case 'goal': return 17;
+      case 'goal': return 21; // 25% larger than subgoal/task (17 * 1.25)
       case 'subgoal': return 17;
       case 'task': return 17;
       default: return 17;
@@ -318,32 +319,35 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
   };
 
   const getNodeStyles = () => {
-    const baseStyles = 'cursor-pointer transition-all duration-200 ease-ios relative inline-flex items-center justify-start text-left rounded-xl shadow-ios hover:shadow-ios-lg hover:-translate-y-0.5 h-[44px] px-3';
+    const baseStyles = 'cursor-pointer transition-all duration-200 ease-ios relative inline-flex items-center justify-start text-left rounded-xl shadow-ios hover:shadow-ios-lg hover:-translate-y-0.5 px-3';
+    const goalHeight = 'h-[66px]';
+    const goalFont = 'text-lg';
+    const defaultHeight = 'h-[44px]';
 
     // When custom colors are provided, use simplified styles (background via inline style)
     if (customColors) {
       switch (item.type) {
         case 'goal':
-          return `${baseStyles} text-white`;
+          return `${baseStyles} ${goalHeight} ${goalFont} text-white`;
         case 'subgoal':
-          return `${baseStyles} text-white`;
+          return `${baseStyles} ${defaultHeight} text-white`;
         case 'task':
-          return `${baseStyles} border border-gray-600 text-white`;
+          return `${baseStyles} ${defaultHeight} border border-gray-600 text-white`;
         default:
-          return `${baseStyles} text-white`;
+          return `${baseStyles} ${defaultHeight} text-white`;
       }
     }
 
     // Default styles for work/personal workspaces
     switch (item.type) {
       case 'goal':
-        return `${baseStyles} bg-gray-200 dark:bg-[#323236] text-gray-900 dark:text-white`;
+        return `${baseStyles} ${goalHeight} ${goalFont} bg-gray-200 dark:bg-[#323236] text-gray-900 dark:text-white`;
       case 'subgoal':
-        return `${baseStyles} bg-gray-100 dark:bg-[#2a2a2e] text-gray-900 dark:text-white`;
+        return `${baseStyles} ${defaultHeight} bg-gray-100 dark:bg-[#2a2a2e] text-gray-900 dark:text-white`;
       case 'task':
-        return `${baseStyles} bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white`;
+        return `${baseStyles} ${defaultHeight} bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white`;
       default:
-        return baseStyles;
+        return `${baseStyles} ${defaultHeight}`;
     }
   };
 
@@ -674,7 +678,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                                 onMouseDown={(e) => e.stopPropagation()}
                                 onPointerDown={(e) => e.stopPropagation()}
                               >
-                                <GripVertical size={14} className="text-gray-400" />
+                                <GripVertical size={14} className="text-transparent" />
                               </div>
                               <OrganismItem
                                 key={child.id}
