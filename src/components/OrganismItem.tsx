@@ -645,7 +645,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
             />
           )}
 
-          <div ref={childrenContainerRef} className="flex flex-col gap-5">
+          <div ref={childrenContainerRef} className="flex flex-col gap-3.5">
             {onReorderChildren ? (
               <DragDropContext onDragEnd={handleDragEnd}>
                 <Droppable droppableId={`children-${item.id}`}>
@@ -653,7 +653,7 @@ export const OrganismItem: React.FC<OrganismItemProps> = ({
                     <div
                       {...provided.droppableProps}
                       ref={provided.innerRef}
-                      className="flex flex-col gap-5"
+                      className="flex flex-col gap-3.5"
                     >
                       {item.children.map((child, index) => (
                         <Draggable key={child.id} draggableId={child.id} index={index}>
